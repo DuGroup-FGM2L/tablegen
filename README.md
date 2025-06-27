@@ -1,6 +1,6 @@
 # Tablegen
 
-LAMMPS potential table generator for [LAMMPS](https://lammps.sandia.gov), developed by Vasilii Maksimov.
+LAMMPS potential table generator for [LAMMPS](https://lammps.sandia.gov), developed by Vasilii Maksimov at the Functional Glasses and Materials Modeling Laboratory (FGM²L) at the University of North Texas, under the supervision of Dr. Jincheng Du.
 
 **Tablegen** is a command-line utility for generating two-body and three-body potential tables for use with LAMMPS simulations. It supports several interaction models commonly used in materials science and glass chemistry, including:
 
