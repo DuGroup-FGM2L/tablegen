@@ -22,10 +22,10 @@ LAMMPS potential table generator for [LAMMPS](https://lammps.sandia.gov), develo
 
 ### Install from PyPI (preferred)
 
-Once the package is published on PyPI you can install the latest stable release with:
+The package is now published on PyPI you can install the latest stable release with:
 
 ```bash
-pip install tablegen
+pip install lammps-tablegen
 ```
 
 ### Install directly from GitHub (bleeding‑edge)
@@ -141,6 +141,6 @@ University of North Texas
 ## 🌐 Links
 
 - 🔬 [LAMMPS Official Site](https://lammps.sandia.gov)
-- 📆 [PyPI Page (coming soon)](https://pypi.org/project/tablegen)
+- 📆 [PyPI Page](https://pypi.org/project/lammps-tablegen)
 - 🐙 [GitHub Repository](https://github.com/superde1fin/tablegen)
 

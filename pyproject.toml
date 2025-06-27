@@ -11,12 +11,15 @@ build-backend = "hatchling.build"
 #  Core metadata
 ###############################################################################
 [project]
-name            = "tablegen"
+name            = "lammps-tablegen"
 version         = "0.1.0"
 description     = "Generator for LAMMPS two-body and three-body tabulated potentials."
 readme          = "README.md"
 requires-python = ">=3.9"
 license         = { text = "GPL-3.0-only" }
+
+[tool.hatch.build.targets.wheel]
+packages = ["tablegen"]
 
 authors = [
   { name = "Vasilii Maksimov", email = "VasiliiMaksimov@my.unt.edu" }
