@@ -1,4 +1,9 @@
-from importlib.metadata import version as _v
+from importlib.metadata import version, PackageNotFoundError
 
-__all__ = ["__version__"]
-__version__ = _v(__name__)
+try:
+    # Distribution name on PyPI / in the wheel
+    __version__ = version("lammps-tablegen")
+except PackageNotFoundError:
+    # Editable or source tree – version unknown
+    __version__ = "0.0.dev0"
+
