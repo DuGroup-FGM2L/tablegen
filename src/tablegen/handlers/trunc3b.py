@@ -127,3 +127,6 @@ class TRUNC3B:
     
         # Cast to plain floats right before returning -----------------------
         return float(fi1), float(fi2), float(fj1), float(fj2), float(fk1), float(fk2)
+
+    def get_table_name(self):
+        return self.TABLENAME

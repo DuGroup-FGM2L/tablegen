@@ -109,3 +109,9 @@ class BUCK_EXT:
 
     def no_spec_msg(self, spec1, spec2):
         return ""
+
+    def get_table_name(self):
+        return self.TABLENAME
+
+    def to_plot(self):
+        return self.PLOT

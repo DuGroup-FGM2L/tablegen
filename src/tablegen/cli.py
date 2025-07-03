@@ -39,7 +39,7 @@ def parse_args():
     buck_ext = subparsers.add_parser("buck_ext", help = "Argument parser for generating tables based on extended Buckingham potentials.")
 
     buck_ext.add_argument("pairs", nargs = "+", type = str, default = [], help = "Pairs of atoms for potential energy and force curve generation. Example: Na-O Si-Na Si-O O-O.")
-    buck_ext.add_argument("-t", "--table_name", type = str, default = "BUCK.table", help = f"Name of the created table file. Default: BUCK.table", metavar = '')
+    buck_ext.add_argument("-t", "--table_name", type = str, default = "BUCKEXT.table", help = f"Name of the created table file. Default: BUCK.table", metavar = '')
     buck_ext.add_argument("-c", "--cutoff", type = float, default = constants.CUTOFF, help = f"Table cutoff beyond which no potentials or forces will be generated. Default: {constants.CUTOFF} Å", metavar = '')
     buck_ext.add_argument("-p", "--plot", nargs=2, type = float, default = None, help = f"Plotting switch. When included the potential functions will be plotted in matplotlib with lower and upper bound specified. Example: -p -10 10.", metavar = "")
     buck_ext.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS, help = f"Number of points used in the table definition of the potential function. Default: {constants.DATAPOINTS}", metavar = '')
@@ -60,7 +60,7 @@ def parse_args():
     return parser.parse_args()
 
 def two_body(handler):
-    file = open(handler.table_name, "w")
+    file = open(handler.get_table_name(), "w")
     radius = np.linspace(0, float(handler.CUTOFF), handler.DATAPOINTS + 1)[1:]
     num_digits = len(str(handler.DATAPOINTS))
 
@@ -83,7 +83,7 @@ def two_body(handler):
                         potential.append(pot_val)
                         file.write(str(i + 1).rjust(num_digits) + "  " + f"{r:.6E}".center(16) + f"{potential[i]:.6E}".center(16) + f"{force[i]:.6E}".rjust(14) + "\n")
                     file.write("\n\n")
-                    if handler.plot:
+                    if handler.to_plot():
                         plt.plot(radius, potential, label = pair_name)
 
             else:
@@ -92,7 +92,7 @@ def two_body(handler):
                     print(msg)
 
     file.close()
-    if handler.plot:
+    if handler.to_plot():
         plt.axhline(0, color='black', linewidth=1, linestyle = '--')
         plt.xlabel("Separation Distance (Å)")
         plt.ylabel("Potential Energy (eV)")
@@ -102,7 +102,7 @@ def two_body(handler):
 
 def three_body(handler):
     
-    tb_file = open(handler.TABLENAME + ".3b", "w")
+    tb_file = open(handler.get_table_name() + ".3b", "w")
     
     tb_text = str()
     for triplet in handler.TRIPLETS:
