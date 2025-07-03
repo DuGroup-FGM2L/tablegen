@@ -78,13 +78,51 @@ tablegen [subcommand] [options]
 
 ### Example usage:
 
-```bash
-tablegen shik structure_file.lmp Si O -t SHIK.table -p
-```
+*PLEASE MAKE SURE TO READ THE HELP INFORMATION THOROUGHLY BEFORE USING EACH SUBCOMMAND* 
+
+Minimal SHIK potential generation for SiO2:
 
 ```bash
-tablegen buck Na-O Si-O -c 10 -d 5000 -t buck.table -p -10 10
+tablegen shik initial.structure Si O
 ```
+
+Standard options invoked:
+
+```bash
+tablegen shik initial.structure Si O --cutoff 8 --data_points 10000 --table_name SHIK.table --plot -10 10
+```
+
+or equivalently
+
+```bash
+tablegen shik initial.structure Si O -c 8 -d 10000 -t SHIK.table -p -10 10
+```
+
+Minimal Buckingham potential table generation (user will be prompted for coefficients):
+
+```bash
+tablegen buck Na-O Si-O
+```
+
+Standard options invoked
+
+```bash
+tablegen buck Na-O Si-O -c 10 -d 5000 -t buck.table -p -20 10
+```
+
+Minimal truncated three-body potential table generation (user will be prompted for coefficients):
+
+```bash
+tablegen 3b_trunc Si-O-Si
+```
+
+Standard options invoked:
+
+```bash
+tablegen 3b_trunc Si-O-Si -t silica -d 30 -c 5
+```
+
+
 
 ## 📚 Documentation
 

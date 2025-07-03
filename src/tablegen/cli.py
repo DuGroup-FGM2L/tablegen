@@ -96,7 +96,7 @@ def two_body(handler):
         plt.axhline(0, color='black', linewidth=1, linestyle = '--')
         plt.xlabel("Separation Distance (Å)")
         plt.ylabel("Potential Energy (eV)")
-        plt.ylim(*handler.plot)
+        plt.ylim(*handler.to_plot())
         plt.legend()
         plt.show()
 
