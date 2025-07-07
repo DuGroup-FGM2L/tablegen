@@ -87,9 +87,15 @@ $$
 
 $$
 \begin{aligned}
-V\left( r_{ij} \right) = A_{ij} \exp\left( -\frac{r}{\rho_{ij}} \right)  - \frac{C_{ij}}{r^6}$$
+V\left( r_{ij} \right) = A_{ij} \exp\left( -\frac{r}{\rho_{ij}} \right)  - \frac{C_{ij}}{r^6}
+\end{aligned}
+$$
+
 - `buck_ext`: Use the extended Buckingham potential with softened short-range repulsion
-$$V\left( r_{ij} \right) = A_{ij} \exp\left( -\frac{r}{\rho_{ij}} \right)  - \frac{C_{ij}}{r^6} \left( 1 - \exp\left( - \left( \frac{r_{ij}}{43\rho_{ij}} \right)^6 \right) \right) + \frac{D_{ij}}{r_{ij}^{12}}
+
+$$
+\begin{aligned}
+V\left( r_{ij} \right) = A_{ij} \exp\left( -\frac{r}{\rho_{ij}} \right)  - \frac{C_{ij}}{r^6} \left( 1 - \exp\left( - \left( \frac{r_{ij}}{43\rho_{ij}} \right)^6 \right) \right) + \frac{D_{ij}}{r_{ij}^{12}}
 \end{aligned}
 $$
 
