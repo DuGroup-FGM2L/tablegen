@@ -72,9 +72,14 @@ tablegen [style] [options]
 ### Available styles:
 
 - `shik`: Generate two-body tables using the SHIK potential
-$$V^{SHIK} = V^{Buck} \left( r_{\alpha\beta} \right) + V^{Wolf}\left( r_{\alpha\beta} \right)\\
+
+$$
+\begin{align*}
+V^{SHIK} = V^{Buck} \left( r_{\alpha\beta} \right) + V^{Wolf}\left( r_{\alpha\beta} \right)\\
 V^{Buck} \left( r_{\alpha\beta} \right) = A_{\alpha\beta} \exp\left( -B_{\alpha\beta} r_{\alpha\beta} \right) - \frac{C_{\alpha\beta}}{r_{\alpha\beta}^6} + \frac{D_{\alpha\beta}}{r_{\alpha\beta}^{24}}\\
-V^W \left( r_{\alpha\beta} \right) = q_{\alpha} q_{\beta} \left( \frac{1}{r_{\alpha\beta}} - \frac{1}{r_{cut}^W} + \frac{r_{\alpha\beta} - r_{cut}^W}{\left( r_{cut}^W \right)^2} \right)$$
+V^W \left( r_{\alpha\beta} \right) = q_{\alpha} q_{\beta} \left( \frac{1}{r_{\alpha\beta}} - \frac{1}{r_{cut}^W} + \frac{r_{\alpha\beta} - r_{cut}^W}{\left( r_{cut}^W \right)^2} \right)
+\end{align*}
+$$
 
 *Note: Currently the pairs with published coefficients will have the wolf part added while no potential entry will be generated for a pair without coefficients (i.e. Na-Al)*
 
