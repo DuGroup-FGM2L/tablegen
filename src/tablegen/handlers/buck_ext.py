@@ -9,7 +9,7 @@ class BUCK_EXT:
         self.TABLENAME = args.table_name
         self.PLOT = args.plot
 
-        self.is_2b = True
+        self.TWO_BODY = True
         spec_set = set()
         self.all_pairs = list()
 
@@ -115,3 +115,15 @@ class BUCK_EXT:
 
     def to_plot(self):
         return self.PLOT
+
+    def get_cutoff(self):
+        return float(self.CUTOFF)
+
+    def get_datapoints(self):
+        return self.DATAPOINTS
+
+    def get_species(self):
+        return self.SPECIES
+
+    def is_2b(self):
+        return self.TWO_BODY

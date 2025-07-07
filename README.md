@@ -66,19 +66,22 @@ pip install -e .
 After installation, invoke the CLI with:
 
 ```bash
-tablegen [subcommand] [options]
+tablegen [style] [options]
 ```
 
-### Available subcommands:
+### Available styles:
 
 - `shik`: Generate two-body tables using the SHIK potential
+$$V^{Buck} \left( r_{\alpha\beta} \right) = A_{\alpha\beta} \exp\left( -B_{\alpha\beta} r_{\alpha\beta} \right) - \frac{C_{\alpha\beta}}{r_{\alpha\beta}^6} + \frac{D_{\alpha\beta}}{r_{\alpha\beta}^{24}} + V^W \left( r_{\alpha\beta} \right)$$
+$$V^W \left( r_{\alpha\beta} \right) = q_{\alpha} q_{\beta} \left( \frac{1}{r_{\alpha\beta}} - \frac{1}{r_{cut}^W} + \frac{r_{\alpha\beta} - r_{cut}^W}{\left( r_{cut}^W \right)^2} \right)$$
 - `buck`: Generate tables using the standard Buckingham potential
 - `buck_ext`: Use the extended Buckingham potential with softened short-range repulsion
 - `3b_trunc`: Generate three-body truncated harmonic tables
+- `sw`: Generate three-body Stillinger-Weber potential energy tables
 
 ### Example usage:
 
-*PLEASE MAKE SURE TO READ THE HELP INFORMATION THOROUGHLY BEFORE USING EACH SUBCOMMAND* 
+*PLEASE MAKE SURE TO READ THE HELP INFORMATION THOROUGHLY BEFORE USING EACH STYLE* 
 
 Minimal SHIK potential generation for SiO2:
 
@@ -126,7 +129,7 @@ tablegen 3b_trunc Si-O-Si -t silica -d 30 -c 5
 
 ## 📚 Documentation
 
-All subcommands support `-h` or `--help` flags for detailed usage:
+All styles support `-h` or `--help` flags for detailed usage:
 
 ```bash
 tablegen shik --help

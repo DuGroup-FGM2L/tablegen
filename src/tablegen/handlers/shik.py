@@ -24,7 +24,7 @@ class SHIK:
         for spec in self.SPECIES:
             print(spec, ":", self.CHARGES[spec])
 
-        self.is_2b = True
+        self.TWO_BODY = True
         
     def get_force(self, A, B, C, D, q_a, q_b, r, *args):
         A = mp.mpf(A)
@@ -103,3 +103,15 @@ class SHIK:
 
     def to_plot(self):
         return self.PLOT
+
+    def get_cutoff(self):
+        return float(self.CUTOFF)
+
+    def get_datapoints(self):
+        return self.DATAPOINTS
+
+    def get_species(self):
+        return self.SPECIES
+
+    def is_2b(self):
+        return self.TWO_BODY
