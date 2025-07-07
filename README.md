@@ -72,12 +72,21 @@ tablegen [style] [options]
 ### Available styles:
 
 - `shik`: Generate two-body tables using the SHIK potential
-$$V^{Buck} \left( r_{\alpha\beta} \right) = A_{\alpha\beta} \exp\left( -B_{\alpha\beta} r_{\alpha\beta} \right) - \frac{C_{\alpha\beta}}{r_{\alpha\beta}^6} + \frac{D_{\alpha\beta}}{r_{\alpha\beta}^{24}} + V^W \left( r_{\alpha\beta} \right)$$
-$$V^W \left( r_{\alpha\beta} \right) = q_{\alpha} q_{\beta} \left( \frac{1}{r_{\alpha\beta}} - \frac{1}{r_{cut}^W} + \frac{r_{\alpha\beta} - r_{cut}^W}{\left( r_{cut}^W \right)^2} \right)$$
+$$V^{SHIK} = V^{Buck} \left( r_{\alpha\beta} \right) + V^{Wolf}\left( r_{\alpha\beta} \right)\\
+V^{Buck} \left( r_{\alpha\beta} \right) = A_{\alpha\beta} \exp\left( -B_{\alpha\beta} r_{\alpha\beta} \right) - \frac{C_{\alpha\beta}}{r_{\alpha\beta}^6} + \frac{D_{\alpha\beta}}{r_{\alpha\beta}^{24}}\\
+V^W \left( r_{\alpha\beta} \right) = q_{\alpha} q_{\beta} \left( \frac{1}{r_{\alpha\beta}} - \frac{1}{r_{cut}^W} + \frac{r_{\alpha\beta} - r_{cut}^W}{\left( r_{cut}^W \right)^2} \right)$$
+
+*Note: Currently the pairs with published coefficients will have the wolf part added while no potential entry will be generated for a pair without coefficients (i.e. Na-Al)*
+
 - `buck`: Generate tables using the standard Buckingham potential
+$$V\left( r_{ij} \right) = A_{ij} \exp\left( -\frac{r}{\rho_{ij}} \right)  - \frac{C_{ij}}{r^6}$$
 - `buck_ext`: Use the extended Buckingham potential with softened short-range repulsion
+$$V\left( r_{ij} \right) = A_{ij} \exp\left( -\frac{r}{\rho_{ij}} \right)  - \frac{C_{ij}}{r^6} \left( 1 - \exp\left( - \left( \frac{r_{ij}}{43\rho_{ij}} \right)^6 \right) \right) + \frac{D_{ij}}{r_{ij}^{12}}$$
 - `3b_trunc`: Generate three-body truncated harmonic tables
+
+$$V\left(r_{ij}, r_{ik}, \theta_{jik}\right) = \frac{k}{2} (\theta_{jik} - \theta_0)^2 \exp\left(-\frac{r_{ij}^8 + r_{ik}^8}{\rho^8}\right)$$
 - `sw`: Generate three-body Stillinger-Weber potential energy tables
+$$V\left(r_{ij}, r_{ik}, \theta_{jik}\right) = \lambda_{ijk}\epsilon_{ijk}\left( \cos\theta_{ijk} - \cos\theta_{0ijk} \right)^2 \exp\left( \frac{\gamma_{ij}\sigma_{ij}}{r_{ij} - a_{ij}\sigma_{ij}} \right)\exp\left( \frac{\gamma_{ik}\sigma_{ik}}{r_{ik} - a_{ik}\sigma_{ik}} \right)$$
 
 ### Example usage:
 
