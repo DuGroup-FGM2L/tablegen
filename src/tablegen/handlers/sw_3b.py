@@ -1,9 +1,12 @@
 import re, sys, copy
 import numpy as np
 import mpmath as mp
+import itertools as it
+
 from tablegen import constants
 
-class SW:
+
+class SW_3B:
     
     def __init__(self, args):
         self.TWO_BODY = False
@@ -71,13 +74,6 @@ class SW:
                 sigmaik = sigmaij
                 aik = aij
 
-            ijcut = sigmaij*aij
-            if ijcut < self.CUTOFF:
-                sys.exit(f"Product of a * sigma ({ijcut}) for atoms ({self.TRIPLETS[i][1]}-{self.TRIPLETS[i][0]}) cannot be smaller than cutoff ({self.CUTOFF})")
-
-            ikcut = sigmaik*aik
-            if ikcut < self.CUTOFF:
-                sys.exit(f"Product of a * sigma ({ikcut}) for atoms ({self.TRIPLETS[i][1]}-{self.TRIPLETS[i][2]}) cannot be smaller than cutoff ({self.CUTOFF})")
 
             self.COEFFS[triplet] = [lmbd, epsilon, theta0, gammaij, sigmaij, aij, gammaik, sigmaik, aik]
 
@@ -103,10 +99,10 @@ class SW:
         sigmaik  = mp.mpf(sigmaik)
         aik      = mp.mpf(aik)
 
-        if sigmaij*aij == rij:
+        if sigmaij*aij <= rij:
             return 0
 
-        if sigmaik*aik == rik:
+        if sigmaik*aik <= rik:
             return 0
     
         return lmbd * epsilon * mp.power(mp.cos(theta) - mp.cos(theta0), 2) * mp.exp(gammaij * sigmaij / (rij - aij * sigmaij)) * mp.exp(gammaik * sigmaik / (rik - aik * sigmaik))
@@ -135,16 +131,14 @@ class SW:
 
         #Partial derivative of potential energy with respect to theta
 
-        if sigmaij*aij == rij:
-            U_theta = 0
-        elif sigmaik*aik == rik:
-            U_theta = 0
-        else:
+        if U:
             U_theta = -2 * mp.sin(theta) * lmbd * epsilon * (mp.cos(theta) - mp.cos(theta0)) * mp.exp(gammaij * sigmaij / (rij - aij * sigmaij)) * mp.exp(gammaik * sigmaik / (rik - aik * sigmaik))
+        else:
+            U_theta = 0
 
         f_i1 = mp.power(rij, -1) * U_rij + U_theta * (rik * mp.cos(theta) - rij)/(mp.power(rij, 2) * rik * mp.sin(theta))
         f_i2 = mp.power(rik, -1) * U_rik + U_theta * (rij * mp.cos(theta) - rik)/(mp.power(rik, 2) * rij * mp.sin(theta))
-        f_j2 = -U_theta * mp.power(rij * rik * mp.sin(theta), -1)
+        f_j2 = U_theta * mp.power(rij * rik * mp.sin(theta), -1)
 
         #By symetry (and analytically)
         f_j1 = -f_i1
@@ -171,3 +165,10 @@ class SW:
 
     def is_2b(self):
         return self.TWO_BODY
+
+    def get_all_atom_combos(self):
+        elem_set = set()
+        for trpl in self.TRIPLETS:
+            for el in trpl:
+                elem_set.add(el)
+        return ["-".join(trpl) for trpl in it.product(elem_set, repeat = 3)]

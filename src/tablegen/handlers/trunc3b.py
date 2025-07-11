@@ -1,6 +1,8 @@
 import re, sys, copy
 import numpy as np
 import mpmath as mp
+import itertools as it
+
 from tablegen import constants
 
 class TRUNC3B:
@@ -88,7 +90,7 @@ class TRUNC3B:
         #True for any potential
         f_i1 = mp.power(rij, -1) * U_rij + U_theta * (rik * mp.cos(theta) - rij)/(mp.power(rij, 2) * rik * mp.sin(theta))
         f_i2 = mp.power(rik, -1) * U_rik + U_theta * (rij * mp.cos(theta) - rik)/(mp.power(rik, 2) * rij * mp.sin(theta))
-        f_j2 = -U_theta * mp.power(rij * rik * mp.sin(theta), -1)
+        f_j2 = U_theta * mp.power(rij * rik * mp.sin(theta), -1)
 
         #By symetry (and analytically)
         f_j1 = -f_i1
@@ -115,3 +117,10 @@ class TRUNC3B:
 
     def is_2b(self):
         return self.TWO_BODY
+
+    def get_all_atom_combos(self):
+        elem_set = set()
+        for trpl in self.TRIPLETS:
+            for el in trpl:
+                elem_set.add(el)
+        return ["-".join(trpl) for trpl in it.product(elem_set, repeat = 3)]

@@ -1,13 +1,18 @@
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from pathlib import Path
-from .handlers import SHIK, BUCK, BUCK_EXT, TRUNC3B, SW
+import sys
+from .handlers import SHIK, BUCK, BUCK_EXT, TRUNC3B, SW_3B
 from . import constants
+
+class ErrorHandlingParser(argparse.ArgumentParser):
+    def error(self, message):
+        self.print_help()
+        sys.exit(2)
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(prog = "tablegen")
+    parser = ErrorHandlingParser(prog = "tablegen")
 
     subparsers = parser.add_subparsers(dest="command", required=True, metavar = "style")
     shik = subparsers.add_parser("shik", help = "Argument parser for generating tables based on SHIK potentials.")
@@ -56,14 +61,14 @@ def parse_args():
 
     trunc3b.set_defaults(handler_class = TRUNC3B)
 
-    sw = subparsers.add_parser("sw", help = "Argument parser for generating tables based on Stilinger-Webber potentials.")
+    sw_3b = subparsers.add_parser("3b_sw", help = "Argument parser for generating tables based on Stilinger-Webber potentials.")
 
-    sw.add_argument("triplets", nargs = "+", type = str, default = [], help = "Ttiplets of atoms in the format B-A-C where A is the central atom.")
-    sw.add_argument("-t", "--table_name", type = str, default = "TRUNC", help = f"Name (no extension) of two files that will be created - three-body + tabulated files. Default: TRUNC.3b, TRUNC.table", metavar = '')
-    sw.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS3B, help = f"Number of steps used in tabulating interatomic separation distances. Angle is tabulated with 2N entries. In symmetric case the number of table entries will be M = (N+1)N^2 and in asymmetric 2N^3. Default: {constants.DATAPOINTS3B}", metavar = '')
-    sw.add_argument("-c", "--cutoff", type = float, default = constants.CUTOFF3B, help = f"Table cutoff beyond which no potentials or forces will be generated. Default: {constants.CUTOFF3B} Å", metavar = '')
+    sw_3b.add_argument("triplets", nargs = "+", type = str, default = [], help = "Ttiplets of atoms in the format B-A-C where A is the central atom.")
+    sw_3b.add_argument("-t", "--table_name", type = str, default = "SW", help = f"Name (no extension) of two files that will be created - three-body + tabulated files. Default: SW.3b, SW.table", metavar = '')
+    sw_3b.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS3B, help = f"Number of steps used in tabulating interatomic separation distances. Angle is tabulated with 2N entries. In symmetric case the number of table entries will be M = (N+1)N^2 and in asymmetric 2N^3. Default: {constants.DATAPOINTS3B}", metavar = '')
+    sw_3b.add_argument("-c", "--cutoff", type = float, default = constants.CUTOFF3B, help = f"Table cutoff beyond which no potentials or forces will be generated. Default: {constants.CUTOFF3B} Å", metavar = '')
 
-    sw.set_defaults(handler_class = SW)
+    sw_3b.set_defaults(handler_class = SW_3B)
 
     return parser.parse_args()
 
@@ -77,7 +82,7 @@ def two_body(handler):
     species = handler.get_species()
 
     visited = list()
-    for spec1 in species:
+    for epec1 in species:
         for spec2 in species:
             pair_name = handler.get_pair_name(spec1, spec2)
             if pair_name:
@@ -112,73 +117,123 @@ def two_body(handler):
         plt.legend()
         plt.show()
 
-def get_3b_mapper_text(table_name, triplet):
-    res = str()
 
 
 def three_body(handler, symcase = False):
-    
-    tb_text = "#Generated with tablegen utility https://github.com/superde1fin/tablegen.git"
-    tabulated_text = "#Generated with tablegen utility https://github.com/superde1fin/tablegen.git"
+
     table_name = handler.get_table_name()
+    
+    tb_file = open(table_name + ".3b", "w")
+    tab_file = open(table_name + ".table", "w")
+
+    tb_file.write("#Generated with tablegen utility https://github.com/superde1fin/tablegen.git\n")
+    tab_file.write("#Generated with tablegen utility https://github.com/superde1fin/tablegen.git\n")
+
     cutoff = handler.get_cutoff()
     datapoints = handler.get_datapoints()
     is_symmetric = handler.is_symmetric()
 
+    all_combos = handler.get_all_atom_combos()
+
     for orig, triplet in handler.get_triplets():
-        tb_text += f"{triplet[1]}\n{triplet[0]}\n{triplet[2]}\n"
-        tb_text += f"{handler.CUTOFF}\n"
-        tb_text += table_name + ".table\n"
+        triplet_name = "-".join(triplet)
+        all_combos.remove(triplet_name)
+
+        tb_file.write(f"{triplet[1]}\n{triplet[0]}\n{triplet[2]}\n")
+        tb_file.write(f"{handler.CUTOFF}\n")
+        tb_file.write(table_name + ".table\n")
 
         if orig or not is_symmetric:
-            tb_text += "-".join(triplet) + "\n"
+            tb_file.write("-".join(triplet) + "\n")
         else:
-            tb_text += f"{triplet[2]}-{triplet[1]}-{triplet[0]}\n"
+            tb_file.write(f"{triplet[2]}-{triplet[1]}-{triplet[0]}\n")
             
-        tb_text += "linear\n"
-        tb_text += f"{datapoints}\n\n"
+        tb_file.write("linear\n")
+        tb_file.write(f"{datapoints}\n\n")
 
 
         if orig or not is_symmetric: #If not original triplet (two non-central elements swapped) and potential is symmetric existing table will be reused
-            triplet_name = "-".join(triplet)
-            tabulated_text += triplet_name + "\n"
-            tabulated_text += f"N {handler.DATAPOINTS} rmin {handler.CUTOFF/handler.DATAPOINTS} rmax {handler.CUTOFF}\n\n"
+            tab_file.write(triplet_name + "\n")
+            tab_file.write(f"N {handler.DATAPOINTS} rmin {handler.CUTOFF/handler.DATAPOINTS} rmax {handler.CUTOFF}\n\n")
 
             ctr = 0
             if triplet[0] == triplet[2]:
                 print(f"Triplet {triplet_name} is symmetric. Working on generating a table of {(handler.DATAPOINTS**2) * (handler.DATAPOINTS + 1)} entries")
-                for theta in np.linspace(np.pi/(4*datapoints), np.pi - np.pi/(4*datapoints), 2*datapoints):
-                    for step, rij in enumerate(np.linspace(0, cutoff, datapoints + 1)[1:]):
-                        for rik in np.linspace(rij, cutoff, datapoints - step):
+                for step, rij in enumerate(np.linspace(0, cutoff, datapoints + 1)[1:]):
+                    for rik in np.linspace(rij, cutoff, datapoints - step):
+                        for theta in np.linspace(np.pi/(4*datapoints), np.pi - np.pi/(4*datapoints), 2*datapoints):
                             ctr += 1
                             poteng = handler.get_pot(triplet_name, rij, rik, theta)
                             forces = handler.get_force_coeffs(triplet_name, rij, rik, theta, poteng)
                             force_porj = " ".join(map(str, forces))
-                            tabulated_text += f"{ctr} {rij} {rik} {theta * 180 / np.pi} {force_porj} {poteng}\n"
+                            tab_file.write(f"{ctr} {rij} {rik} {theta * 180 / np.pi} {force_porj} {poteng}\n")
 
-                    print(f"Generated entries for theta = {round(theta * 180 / np.pi, 3)}")
+                    print(f"Progress: {round(100*(step + 1)/datapoints, 3)}%")
 
             else:
                 print(f"Triplet {triplet_name} is asymmetric. Working on generating a table of {2*(handler.DATAPOINTS**3)} entries")
-                for theta in np.linspace(np.pi/(4*datapoints), np.pi - np.pi/(4*datapoints), 2*datapoints):
-                    for step, rij in enumerate(np.linspace(0, cutoff, datapoints + 1)[1:]):
-                        for rik in np.linspace(0, cutoff, datapoints + 1)[1:]:
+                for step, rij in enumerate(np.linspace(0, cutoff, datapoints + 1)[1:]):
+                    for rik in np.linspace(0, cutoff, datapoints + 1)[1:]:
+                        for theta in np.linspace(np.pi/(4*datapoints), np.pi - np.pi/(4*datapoints), 2*datapoints):
                             ctr += 1
                             poteng = handler.get_pot(triplet_name, rij, rik, theta)
                             forces = handler.get_force_coeffs(triplet_name, rij, rik, theta, poteng)
                             force_porj = " ".join(map(str, forces))
-                            tabulated_text += f"{ctr} {rij} {rik} {theta * 180 / np.pi} {force_porj} {poteng}\n"
+                            tab_file.write(f"{ctr} {rij} {rik} {theta * 180 / np.pi} {force_porj} {poteng}\n")
 
-                    print(f"Generated entries for theta = {round(theta * 180 / np.pi, 3)}")
+                    print(f"Progress: {round(100*(step + 1)/datapoints, 3)}%")
 
-            tabulated_text += "\n"
+            tab_file.write("\n")
 
-    tb_file = open(table_name + ".3b", "w")
-    tb_file.write(tb_text)
+    tab_file.write("SYMPH\nN 2 rmin 0.1 rmax 0.2\n\n")
+    tab_file.write("1 0.1 0.1 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("2 0.1 0.2 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("3 0.2 0.2 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("4 0.1 0.1 67.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("5 0.1 0.2 67.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("6 0.2 0.2 67.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("7 0.1 0.1 112.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("8 0.1 0.2 112.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("9 0.2 0.2 112.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("10 0.1 0.1 157.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("11 0.1 0.2 157.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("12 0.2 0.2 157.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+
+    tab_file.write("ASYMPH\nN 2 rmin 0.1 rmax 0.2\n\n")
+    tab_file.write("1 0.1 0.1 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("2 0.1 0.2 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("3 0.2 0.1 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("4 0.2 0.2 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("5 0.1 0.1 67.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("6 0.1 0.2 67.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("7 0.2 0.1 67.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("8 0.2 0.2 67.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("9 0.1 0.1 112.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("10 0.1 0.2 112.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("11 0.2 0.1 112.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("12 0.2 0.2 112.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("13 0.1 0.1 157.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("14 0.1 0.2 157.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("15 0.2 0.1 157.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+    tab_file.write("16 0.2 0.2 157.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
+
+    for triplet in all_combos:
+        elements = triplet.split("-")
+        tb_file.write(f"{elements[1]}\n{elements[0]}\n{elements[2]}\n")
+        tb_file.write("0.2\n")
+        tb_file.write(table_name + ".table\n")
+
+        if elements[0] == elements[2]:
+            tb_file.write("SYMPH\n")
+        else:
+            tb_file.write("ASYMPH\n")
+
+        tb_file.write("linear\n")
+        tb_file.write("2\n\n")
+
+        
+
     tb_file.close()
-
-    tab_file = open(table_name + ".table", "w")
-    tab_file.write(tabulated_text)
     tab_file.close()
 
 
