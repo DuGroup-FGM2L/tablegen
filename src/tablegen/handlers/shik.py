@@ -22,7 +22,8 @@ class SHIK:
 
         print("Charges:\n")
         for spec in self.SPECIES:
-            print(spec, ":", self.CHARGES[spec])
+            if spec in self.CHARGES:
+                print(spec, ":", self.CHARGES[spec])
 
         self.TWO_BODY = True
         

@@ -2,7 +2,8 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-from .handlers import SHIK, BUCK, BUCK_EXT, TRUNC3B, SW_3B
+from .handlers import SHIK, BUCK, BUCK_EXT, TETER
+from .handlers import TRUNC3B, SW_3B
 from . import constants
 
 class ErrorHandlingParser(argparse.ArgumentParser):
@@ -16,7 +17,19 @@ def parse_args():
     parser = ErrorHandlingParser(prog = "tablegen")
 
     subparsers = parser.add_subparsers(dest="command", required=True, metavar = "style")
-    shik = subparsers.add_parser("shik", help = "Argument parser for generating tables based on SHIK potentials.")
+
+    teter = subparsers.add_parser("teter", help = "Argument parser for generating tables based on TETER potentials.", description = "Non-Coulomic part of Teter potential.\n\nRef:\n\tDeng L, Du J. \"Development of boron oxide potentials for computer simulations of multicomponent oxide glasses.\" J Am Ceram Soc. 2019; 102: 2482–2505. https://doi.org/10.1111/jace.16082\n\nNote: Boron parameter calculation not yet implemented.", formatter_class = argparse.RawDescriptionHelpFormatter)
+
+    teter.add_argument("pairs", nargs = "+", type = str, default = [], help = "Pairs of atoms for potential energy and force curve generation. Example: Na-O Si-Na Si-O O-O.")
+
+    teter.add_argument("-c", "--cutoff", type = float, default = constants.TETER_CUTOFF, help = f"Table cutoff beyond which no potentials or forces will be generated. Default: {constants.TETER_CUTOFF} Å", metavar = '')
+    teter.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS, help = f"Number of points used in the table definition of the potential function. Default: {constants.DATAPOINTS}", metavar = '')
+    teter.add_argument("-t", "--table_name", type = str, default = "TETER.table", help = f"Name of the created table file. Default: TETER.table", metavar = '')
+    teter.add_argument("-p", "--plot", nargs=2, type = float, default = None, help = f"Plotting switch. When included the potential functions will be plotted in matplotlib with lower and upper bound specified. Example: -p -10 10.", metavar = "")
+
+    teter.set_defaults(handler_class = TETER)
+
+    shik = subparsers.add_parser("shik", help = "Argument parser for generating tables based on SHIK potentials.", description = "Ref:\n\tYueh-Ting Shih, Siddharth Sundararaman, Simona Ispas, and Liping Huang. \"New interaction potentials for alkaline earth silicate and borate glasses.\" Journal of non-crystalline solids 565 (2021): 120853.", formatter_class = argparse.RawDescriptionHelpFormatter)
 
     shik.add_argument("structure_file", type = str, help = "Initial Structure File.")
     shik.add_argument("species", nargs = "+", type = str, default = constants.SHIK_SPECIES, help = "Map of species types (specified as space separated strings).")
@@ -26,7 +39,7 @@ def parse_args():
     shik.add_argument("-g", "--gamma", type = float, default = constants.GAMMA, help = f"Smoothing function width. Default: {constants.GAMMA} Å", metavar = '')
     shik.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS, help = f"Number of points used in the table definition of the potential function. Default: {constants.DATAPOINTS}", metavar = '')
     shik.add_argument("-t", "--table_name", type = str, default = "SHIK.table", help = f"Name of the created table file. Default: SHIK.table", metavar = '')
-    shik.add_argument("-p", "--plot", action = "store_true", default = False, help = f"Plotting switch. When included the potential functions will be plotted in matplotlib.")
+    shik.add_argument("-p", "--plot", nargs=2, type = float, default = None, help = f"Plotting switch. When included the potential functions will be plotted in matplotlib with lower and upper bound specified. Example: -p -10 10.", metavar = "")
 
     shik.set_defaults(handler_class = SHIK)
 
@@ -75,7 +88,7 @@ def parse_args():
 
 def two_body(handler):
     file = open(handler.get_table_name(), "w")
-    file.write("#Generated with tablegen utility https://github.com/superde1fin/tablegen.git\n")
+    file.write("#Generated with tablegen utility https://github.com/DuGroup-FGM2L/tablegen.git\n")
     datapoints = handler.get_datapoints()
     radius = np.linspace(0, handler.get_cutoff(), datapoints + 1)[1:]
     num_digits = len(str(datapoints))
@@ -83,7 +96,8 @@ def two_body(handler):
     species = handler.get_species()
 
     visited = list()
-    for epec1 in species:
+    visited_noint = list()
+    for spec1 in species:
         for spec2 in species:
             pair_name = handler.get_pair_name(spec1, spec2)
             if pair_name:
@@ -106,8 +120,11 @@ def two_body(handler):
 
             else:
                 msg = handler.no_spec_msg(spec1, spec2)
-                if msg:
-                    print(msg)
+                if (spec1, spec2) not in visited_noint:
+                    visited_noint.append((spec1, spec2))
+                    visited_noint.append((spec2, spec1))
+                    if msg:
+                        print(msg)
 
     file.close()
     if handler.to_plot():
@@ -118,6 +135,8 @@ def two_body(handler):
         plt.legend()
         plt.show()
 
+        plt.savefig("potentials.png", dpi = 300, bbox_inches = "tight")
+
 
 
 def three_body(handler, symcase = False):
@@ -127,8 +146,8 @@ def three_body(handler, symcase = False):
     tb_file = open(table_name + ".3b", "w")
     tab_file = open(table_name + ".table", "w")
 
-    tb_file.write("#Generated with tablegen utility https://github.com/superde1fin/tablegen.git\n")
-    tab_file.write("#Generated with tablegen utility https://github.com/superde1fin/tablegen.git\n")
+    tb_file.write("#Generated with tablegen utility https://github.com/DuGroup-FGM2L/tablegen.git\n")
+    tab_file.write("#Generated with tablegen utility https://github.com/DuGroup-FGM2L/tablegen.git\n")
 
     cutoff = handler.get_cutoff()
     datapoints = handler.get_datapoints()
