@@ -80,7 +80,7 @@ V^{short} = A_{ij} \exp(-\frac{r_{ij}}{\rho_{ij}}) - \frac{C_{ij}}{r_{ij}^6}
 $$
 
 *Note: Coulombic interactions should be added manually with Ewald summation and percision of 1e-6.
-*Charges of each atomic species will be printed out.
+Charges of each atomic species will be printed out.*
 
 - `shik`: Generate two-body tables using the SHIK potential
 
