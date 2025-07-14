@@ -71,6 +71,17 @@ tablegen [style] [options]
 
 ### Available styles:
 
+- `teter`: Generate two-body tables using the Teter potential
+
+$$
+\begin{gather*}
+V^{short} = A_{ij} \exp(-\frac{r_{ij}}{\rho_{ij}}) - \frac{C_{ij}}{r_{ij}^6}
+\end{gather*}
+$$
+
+*Note: Coulombic interactions should be added manually with Ewald summation and percision of 1e-6.
+*Charges of each atomic species will be printed out.
+
 - `shik`: Generate two-body tables using the SHIK potential
 
 $$
@@ -118,6 +129,18 @@ $$
 ### Example usage:
 
 *PLEASE MAKE SURE TO READ THE HELP INFORMATION THOROUGHLY BEFORE USING EACH STYLE* 
+
+Minimal Teter potential generation for SiO2:
+
+```bash
+tablegen teter Si-O
+```
+
+Standard options invoked:
+
+```bash
+tablegen teter Si-O --cutoff 8 --data_points 10000 --table_name TETER.table --plot -10 10
+```
 
 Minimal SHIK potential generation for SiO2:
 
