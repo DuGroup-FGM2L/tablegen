@@ -24,6 +24,7 @@ class SHIK:
         for spec in self.SPECIES:
             if spec in self.CHARGES:
                 print(spec, ":", self.CHARGES[spec])
+        print()
 
         self.TWO_BODY = True
         
@@ -97,7 +98,7 @@ class SHIK:
         return -total_positive_charge/num_oxygens
 
     def no_spec_msg(self, spec1, spec2):
-        return f"No potential exists for species {spec1} and {spec2}."
+        return f"WARNING: No potential exists for species {spec1} and {spec2}."
 
     def get_table_name(self):
         return self.TABLENAME

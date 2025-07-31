@@ -12,11 +12,10 @@ class TETER:
         self.TWO_BODY = True
         self.all_pairs = list()
 
-        self.SPECIES = ["O"]
+        self.SPECIES = list()
 
         for atom in args.elements:
-            if atom != "O":
-                self.SPECIES.append(atom)
+            self.SPECIES.append(atom)
 
         self.CHARGES = constants.TETER_CHARGES
 
@@ -33,6 +32,7 @@ class TETER:
         for spec in self.SPECIES:
             if spec in self.CHARGES:
                 print(spec, ":", self.CHARGES[spec])
+        print()
 
 
         self.CUTOFF = mp.mpf(args.cutoff)
@@ -92,9 +92,9 @@ class TETER:
 
     def no_spec_msg(self, spec1, spec2):
         if spec2 == "O":
-            return f"No {spec1}-{spec2} interaction is specified by Teter potentials."
+            return f"WARNING: No {spec1}-{spec2} interaction is specified by Teter potentials.\n"
         else:
-            return f"Only oxygen-cation interactions are specified by Teter (not {spec1}-{spec2}).\n One should use Coulombic interactions."
+            return f"WARNING: Only oxygen-cation interactions are specified by Teter (not {spec1}-{spec2}).\n One should use Coulombic interactions.\n"
 
     def get_table_name(self):
         return self.TABLENAME
