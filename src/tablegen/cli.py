@@ -20,7 +20,7 @@ def parse_args():
 
     teter = subparsers.add_parser("teter", help = "Argument parser for generating tables based on TETER potentials.", description = "Non-Coulomic part of Teter potential.\n\nRef:\n\tDeng L, Du J. \"Development of boron oxide potentials for computer simulations of multicomponent oxide glasses.\" J Am Ceram Soc. 2019; 102: 2482–2505. https://doi.org/10.1111/jace.16082\n\nNote: Boron parameter calculation not yet implemented.", formatter_class = argparse.RawDescriptionHelpFormatter)
 
-    teter.add_argument("pairs", nargs = "+", type = str, default = [], help = "Pairs of atoms for potential energy and force curve generation. Example: Na-O Si-Na Si-O O-O.")
+    teter.add_argument("elements", nargs = "+", type = str, default = [], help = "Atoms for potential energy and force curve generation. Example: Si O Na.")
 
     teter.add_argument("-c", "--cutoff", type = float, default = constants.TETER_CUTOFF, help = f"Table cutoff beyond which no potentials or forces will be generated. Default: {constants.TETER_CUTOFF} Å", metavar = '')
     teter.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS, help = f"Number of points used in the table definition of the potential function. Default: {constants.DATAPOINTS}", metavar = '')

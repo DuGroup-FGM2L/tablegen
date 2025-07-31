@@ -10,30 +10,24 @@ class TETER:
         self.PLOT = args.plot
 
         self.TWO_BODY = True
-        spec_set = set()
         self.all_pairs = list()
 
-        for pair in args.pairs:
-            spec_lst = re.sub(r'\s+', '', pair).split("-")
-            if len(spec_lst) != 2:
-                raise RuntimeError("Each pair should consist of exactly two atomic species.")
-            spec_set.update(spec_lst)
-            self.all_pairs.append(pair)
-            self.all_pairs.append(f"{spec_lst[1]}-{spec_lst[0]}")
+        self.SPECIES = ["O"]
 
-        self.SPECIES = sorted(list(spec_set))
+        for atom in args.elements:
+            if atom != "O":
+                self.SPECIES.append(atom)
 
         self.CHARGES = constants.TETER_CHARGES
 
         self.COEFFS = dict()
 
         visited = list()
-        for spec1 in self.SPECIES:
-            for spec2 in self.SPECIES:
-                pair_name = self.get_pair_name(spec1, spec2)
-                if (pair_name not in visited) and (pair_name is not None):
-                    visited.append(pair_name)
-                    self.COEFFS[pair_name] = constants.TETER_coeffs[pair_name]
+        for spec in self.SPECIES:
+            pair_name = self.get_pair_name(spec, "O")
+            if (pair_name not in visited) and (pair_name is not None):
+                visited.append(pair_name)
+                self.COEFFS[pair_name] = constants.TETER_coeffs[pair_name]
 
         print("Charges:\n")
         for spec in self.SPECIES:
@@ -45,9 +39,13 @@ class TETER:
         self.DATAPOINTS = args.data_points
 
     def get_pair_name(self, spec1, spec2):
-        for attempt in (f"{spec1}-{spec2}", f"{spec2}-{spec1}"):
-            if attempt in constants.TETER_coeffs:
-                return attempt
+        attempt = f"{spec1}-O"
+        if attempt in constants.TETER_coeffs and spec2 == "O":
+            return attempt
+
+        attempt = f"{spec2}-O"
+        if attempt in constants.TETER_coeffs and spec1 == "O":
+            return attempt
 
         return None
 
@@ -93,7 +91,10 @@ class TETER:
         return float(self.get_pot(*self.COEFFS[pair_name], r))
 
     def no_spec_msg(self, spec1, spec2):
-        return f"No {spec1}-{spec2} interaction is specified by Teter potentials.\n One should use Coulombic interactions."
+        if spec2 == "O":
+            return f"No {spec1}-{spec2} interaction is specified by Teter potentials."
+        else:
+            return f"Only oxygen-cation interactions are specified by Teter (not {spec1}-{spec2}).\n One should use Coulombic interactions."
 
     def get_table_name(self):
         return self.TABLENAME
