@@ -16,12 +16,8 @@ class TETER(BASE2B):
         self.PLOT = args.plot
 
         self.TWO_BODY = True
-        self.all_pairs = list()
 
-        self.SPECIES = list()
-
-        for atom in args.elements:
-            self.SPECIES.append(atom)
+        self.SPECIES = args.species
 
         self.CHARGES = constants.TETER_CHARGES
 
@@ -29,10 +25,19 @@ class TETER(BASE2B):
 
         visited = list()
         for spec in self.SPECIES:
-            pair_name = self.get_pair_name(spec, "O")
-            if (pair_name not in visited) and (pair_name is not None):
+            pair_name = None
+
+            for attempt in (f"{spec}-O", f"O-{spec}"):
+                if attempt in constants.TETER_COEFFS:
+                    pair_name = attempt
+
+            if pair_name is None:
+                print(f"\nWARNING: Unsupported atom {spec} will be ignored.\n")
+            elif pair_name in visited:
+                print(f"\nWARNING: Duplicate entry for atom {spec} will be ignored.\n")
+            else:
                 visited.append(pair_name)
-                self.COEFFS[pair_name] = constants.TETER_coeffs[pair_name]
+                self.COEFFS[pair_name] = constants.TETER_COEFFS[pair_name]
 
         print("Charges:\n")
         for spec in self.SPECIES:
@@ -44,16 +49,8 @@ class TETER(BASE2B):
         self.CUTOFF = mp.mpf(args.cutoff)
         self.DATAPOINTS = args.data_points
 
-    def get_pair_name(self, spec1, spec2):
-        attempt = f"{spec1}-O"
-        if attempt in constants.TETER_coeffs and spec2 == "O":
-            return attempt
-
-        attempt = f"{spec2}-O"
-        if attempt in constants.TETER_coeffs and spec1 == "O":
-            return attempt
-
-        return None
+    def get_pairs(self):
+        return self.COEFFS.keys()
 
 
     def get_force(self, A, B, C, D, rho, n, r_0, r):
@@ -88,19 +85,20 @@ class TETER(BASE2B):
             return A * mp.exp(-r / rho) - C * mp.power(r, -6)
 
 
-    def eval_force(self, spec1, spec2, r):
-        pair_name = self.get_pair_name(spec1, spec2)
-        return float(self.get_force(*self.COEFFS[pair_name], r))
-
-    def eval_pot(self, spec1, spec2, r):
-        pair_name = self.get_pair_name(spec1, spec2)
-        return float(self.get_pot(*self.COEFFS[pair_name], r))
-
-    def no_spec_msg(self, spec1, spec2):
-        if spec2 == "O":
-            return f"WARNING: No {spec1}-{spec2} interaction is specified by Teter potentials.\n"
+    def eval_force(self, pair_name, r):
+        if pair_name in self.COEFFS.keys():
+            return float(self.get_force(*self.COEFFS[pair_name], r))
         else:
-            return f"WARNING: Only oxygen-cation interactions are specified by Teter (not {spec1}-{spec2}).\n One should use Coulombic interactions.\n"
+            raise RuntimeError("ERROR: Inconsitent pair_name assignment!")
+
+    def eval_pot(self, pair_name, r):
+        if pair_name in self.COEFFS.keys():
+            return float(self.get_pot(*self.COEFFS[pair_name], r))
+        else:
+            raise RuntimeError("ERROR: Inconsitent pair_name assignment!")
+
+    def comment_message_call(self):
+        print(f"\nCOMMENT: Only oxygen-cation interactions are specified by Teter.\n One should use Coulombic interactions for the rest.\n")
 
     def get_table_name(self):
         return self.TABLENAME
@@ -155,7 +153,7 @@ class TETER(BASE2B):
 
         print("\nPAIRWISE COEFFICIENTS:\n")
 
-        pair_str_len = max([len(p) for p in constants.TETER_coeffs.keys()] + [len("PAIR")]) + TETER.SUPPORT_SPACING
+        pair_str_len = max([len(p) for p in constants.TETER_COEFFS.keys()] + [len("PAIR")]) + TETER.SUPPORT_SPACING
 
         num_coeffs = len(constants.TETER_COEFF_HEADINGS)
         column_params = list()
@@ -164,7 +162,7 @@ class TETER(BASE2B):
             coeff_str_len = len(constants.TETER_COEFF_HEADINGS[i])
             max_left = 1
             max_right = 1
-            for coeffs in constants.TETER_coeffs.values():
+            for coeffs in constants.TETER_COEFFS.values():
                 mod_c = utils.format_min_dec(coeffs[i], 1).strip()
                 c_len = len(mod_c)
                 if c_len > coeff_str_len:
@@ -186,7 +184,7 @@ class TETER(BASE2B):
             res_str += constants.TETER_COEFF_HEADINGS[i].center(column_params[i][0])
         print("  " + res_str)
 
-        for pair, coeffs in constants.TETER_coeffs.items():
+        for pair, coeffs in constants.TETER_COEFFS.items():
             res_str = "  " + pair.ljust(pair_str_len)
             for i in range(num_coeffs):
                 res_str += utils.align_by_decimal(

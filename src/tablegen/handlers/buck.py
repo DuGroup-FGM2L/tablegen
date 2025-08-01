@@ -15,63 +15,44 @@ class BUCK(BASE2B):
         self.PLOT = args.plot
 
         self.TWO_BODY = True
-        spec_set = set()
-        self.all_pairs = list()
 
+        names = list()
         for pair in args.pairs:
             spec_lst = re.sub(r'\s+', '', pair).split("-")
             if len(spec_lst) != 2:
-                raise RuntimeError("Each pair should consist of exactly two atomic species.")
-            spec_set.update(spec_lst)
-            self.all_pairs.append(pair)
-            self.all_pairs.append(f"{spec_lst[1]}-{spec_lst[0]}")
-
-        self.SPECIES = sorted(list(spec_set))
-
-        self.order_map = dict()
-        for i, spec in enumerate(self.SPECIES):
-            self.order_map[spec] = i
+                print("\nERROR: Each pair should consist of exactly two atomic species.\n")
+                sys.exit(1)
+            names.append(pair)
 
         self.COEFFS = dict()
 
-        visited = list()
         print("Please provide Buckingham coefficients A, rho, and C for the following pairs:")
-        for spec1 in self.SPECIES:
-            for spec2 in self.SPECIES:
-                pair_name = self.get_pair_name(spec1, spec2)
-                if (pair_name not in visited) and (pair_name is not None):
-                    visited.append(pair_name)
-                    try:
-                        A = float(input(f"({pair_name}) A: "))
-                    except ValueError:
-                        print("Buckingham coefficients should be numbers")
-                        sys.exit()
+        visited = list()
+        for pair_name in names:
+            if not pair_name in visited:
+                visited.append(pair_name)
+                try:
+                    A = float(input(f"({pair_name}) A: "))
+                except ValueError:
+                    print("Buckingham coefficients should be numbers")
+                    sys.exit()
 
-                    try:
-                        rho = float(input(f"({pair_name}) rho: "))
-                    except ValueError:
-                        print("Buckingham coefficients should be numbers")
-                        sys.exit()
+                try:
+                    rho = float(input(f"({pair_name}) rho: "))
+                except ValueError:
+                    print("Buckingham coefficients should be numbers")
+                    sys.exit()
 
-                    try:
-                        C = float(input(f"({pair_name}) C: "))
-                    except ValueError:
-                        print("Buckingham coefficients should be numbers")
-                        sys.exit()
+                try:
+                    C = float(input(f"({pair_name}) C: "))
+                except ValueError:
+                    print("Buckingham coefficients should be numbers")
+                    sys.exit()
 
-                    self.COEFFS[pair_name] = [A, rho, C]
+                self.COEFFS[pair_name] = [A, rho, C]
 
         self.CUTOFF = mp.mpf(args.cutoff)
         self.DATAPOINTS = args.data_points
-
-    def get_pair_name(self, spec1, spec2):
-        if self.order_map[spec1] < self.order_map[spec2]:
-            res = f"{spec1}-{spec2}"
-        else:
-            res = f"{spec2}-{spec1}"            
-
-        if res in self.all_pairs:
-            return res
 
     def get_force(self, A, rho, C, r):
         A = mp.mpf(A)
@@ -87,13 +68,17 @@ class BUCK(BASE2B):
         r = mp.mpf(r)
         return float(A*mp.exp(-r/rho) - C/(r**6))
 
-    def eval_force(self, spec1, spec2, r):
-        pair_name = self.get_pair_name(spec1, spec2)
-        return self.get_force(*self.COEFFS[pair_name], r)
+    def eval_force(self, pair_name, r):
+        if pair_name in self.COEFFS.keys():
+            return self.get_force(*self.COEFFS[pair_name], r)
+        else:
+            raise RuntimeError("ERROR: Inconsitent pair_name assignment!")
 
-    def eval_pot(self, spec1, spec2, r):
-        pair_name = self.get_pair_name(spec1, spec2)
-        return self.get_pot(*self.COEFFS[pair_name], r)
+    def eval_pot(self, pair_name, r):
+        if pair_name in self.COEFFS.keys():
+            return self.get_pot(*self.COEFFS[pair_name], r)
+        else:
+            raise RuntimeError("ERROR: Inconsitent pair_name assignment!")
 
     def get_table_name(self):
         return self.TABLENAME
@@ -107,5 +92,5 @@ class BUCK(BASE2B):
     def get_datapoints(self):
         return self.DATAPOINTS
 
-    def get_species(self):
-        return self.SPECIES
+    def get_pairs(self):
+        return self.COEFFS.keys()

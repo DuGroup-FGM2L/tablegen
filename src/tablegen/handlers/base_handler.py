@@ -14,23 +14,20 @@ class BASE2B():
     def get_datapoints(self):
         return 0
 
-    def get_species(self):
+    def get_pairs(self):
         return []
 
-    def get_pair_name(self, spec1, spec2):
-        return None
-
-    def eval_force(self, spec1, spec2, r):
+    def eval_force(self, pair_name, r):
         return 0
 
-    def eval_pot(self, spec1, spec2, r):
+    def eval_pot(self, pair_name, r):
         return 0
 
     def to_plot(self):
         return []
 
-    def no_spec_msg(self, spec1, spec2):
-        return ""
+    def comment_message_call(self):
+        return
 
     def is_2b(self):
         return self.TWO_BODY

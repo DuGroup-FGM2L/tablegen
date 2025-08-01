@@ -14,7 +14,7 @@ def parse_args():
 
     teter = subparsers.add_parser("teter", help = "Argument parser for generating tables based on TETER potentials.", description = "Non-Coulomic part of Teter potential.\n\nRef:\n\tDeng L, Du J. \"Development of boron oxide potentials for computer simulations of multicomponent oxide glasses.\" J Am Ceram Soc. 2019; 102: 2482–2505. https://doi.org/10.1111/jace.16082\n\nNote: Boron parameter calculation not yet implemented.", formatter_class = argparse.RawDescriptionHelpFormatter)
 
-    teter.add_argument("elements", nargs = "+", type = str, default = [], help = "Atoms for potential energy and force curve generation. Example: Si O Na.")
+    teter.add_argument("species", nargs = "+", type = str, default = [], help = "Atoms for potential energy and force curve generation. Example: Si O Na.")
 
     teter.add_argument("-c", "--cutoff", type = float, default = constants.TETER_CUTOFF, help = f"Table cutoff beyond which no potentials or forces will be generated. Default: {constants.TETER_CUTOFF} Å", metavar = '')
     teter.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS, help = f"Number of points used in the table definition of the potential function. Default: {constants.DATAPOINTS}", metavar = '')
@@ -26,8 +26,7 @@ def parse_args():
 
     shik = subparsers.add_parser("shik", help = "Argument parser for generating tables based on SHIK potentials.", description = "Ref:\n\tYueh-Ting Shih, Siddharth Sundararaman, Simona Ispas, and Liping Huang. \"New interaction potentials for alkaline earth silicate and borate glasses.\" Journal of non-crystalline solids 565 (2021): 120853.", formatter_class = argparse.RawDescriptionHelpFormatter)
 
-    shik.add_argument("structure_file", type = str, help = "Initial Structure File.")
-    shik.add_argument("species", nargs = "+", type = str, default = constants.SHIK_SPECIES, help = "Map of species types (specified as space separated strings).")
+    shik.add_argument("species", nargs = "+", type = str, default = [], help = "Map of species types and their stoichiometric coefficients with colons as separators. Example: Si:1 O:2. Coefficients of 1 can be ommited. Previous example is analogous to Si O:2.")
     shik.add_argument("-c", "--cutoff", type = float, default = constants.CUTOFF, help = f"Table cutoff beyond which no potentials or forces will be generated. Default: {constants.CUTOFF} Å", metavar = '')
     shik.add_argument("-w", "--wolf_cutoff", type = float, default = constants.WOLF_CUTOFF, help = f"Wolf cutoff used for generation of the potential functions. Default: {constants.WOLF_CUTOFF} Å", metavar = '')
     shik.add_argument("-b", "--buck_cutoff", type = float, default = constants.BUCK_CUTOFF, help = f"Buckingham cutoff that specifies past which distance only wolf interactions are considered. Default: {constants.BUCK_CUTOFF} Å", metavar = '')
@@ -89,38 +88,25 @@ def two_body(handler):
     radius = np.linspace(0, handler.get_cutoff(), datapoints + 1)[1:]
     num_digits = len(str(datapoints))
 
-    species = handler.get_species()
+    pairs = handler.get_pairs()
 
-    visited = list()
-    visited_noint = list()
-    for spec1 in species:
-        for spec2 in species:
-            pair_name = handler.get_pair_name(spec1, spec2)
-            if pair_name:
-                if pair_name not in visited:
-                    print(f"Pair name for {spec1} and {spec2} is {pair_name}")
-                    visited.append(pair_name)
-                    file.write(pair_name + "\n")
-                    file.write(f"N {datapoints}\n\n")
-                    potential = []
-                    force = []
-                    for i, r in enumerate(radius):
-                        force_val = handler.eval_force(spec1, spec2, r)
-                        force.append(force_val)
-                        pot_val = handler.eval_pot(spec1, spec2, r)
-                        potential.append(pot_val)
-                        file.write(str(i + 1).rjust(num_digits) + "  " + f"{r:.6E}".center(16) + f"{potential[i]:.6E}".center(16) + f"{force[i]:.6E}".rjust(14) + "\n")
-                    file.write("\n\n")
-                    if handler.to_plot():
-                        plt.plot(radius, potential, label = pair_name)
+    for pair_name in pairs:
+            print(f"Generating interaction parameters for {pair_name}")
+            file.write(pair_name + "\n")
+            file.write(f"N {datapoints}\n\n")
+            potential = []
+            force = []
+            for i, r in enumerate(radius):
+                force_val = handler.eval_force(pair_name, r)
+                force.append(force_val)
+                pot_val = handler.eval_pot(pair_name, r)
+                potential.append(pot_val)
+                file.write(str(i + 1).rjust(num_digits) + "  " + f"{r:.6E}".center(16) + f"{potential[i]:.6E}".center(16) + f"{force[i]:.6E}".rjust(14) + "\n")
+            file.write("\n\n")
+            if handler.to_plot():
+                plt.plot(radius, potential, label = pair_name)
 
-            else:
-                msg = handler.no_spec_msg(spec1, spec2)
-                if (spec1, spec2) not in visited_noint:
-                    visited_noint.append((spec1, spec2))
-                    visited_noint.append((spec2, spec1))
-                    if msg:
-                        print(msg)
+    handler.comment_message_call()
 
     file.close()
     if handler.to_plot():
@@ -201,6 +187,7 @@ def three_body(handler, symcase = False):
 
             tab_file.write("\n")
 
+    #Placeholder for symmetric pairs
     tab_file.write("SYMPH\nN 2 rmin 0.1 rmax 0.2\n\n")
     tab_file.write("1 0.1 0.1 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
     tab_file.write("2 0.1 0.2 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
@@ -215,6 +202,7 @@ def three_body(handler, symcase = False):
     tab_file.write("11 0.1 0.2 157.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
     tab_file.write("12 0.2 0.2 157.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
 
+    #Placeholder for asymmetric pairs
     tab_file.write("ASYMPH\nN 2 rmin 0.1 rmax 0.2\n\n")
     tab_file.write("1 0.1 0.1 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
     tab_file.write("2 0.1 0.2 22.5 0.0 0.0 0.0 0.0 0.0 0.0 0.0\n")
