@@ -1,11 +1,16 @@
 import re, sys
 import numpy as np
 import mpmath as mp
+
 from tablegen import constants
 
-class BUCK:
+from .base_handler import BASE2B
+
+class BUCK(BASE2B):
     
     def __init__(self, args):
+        super().__init__()
+
         self.TABLENAME = args.table_name
         self.PLOT = args.plot
 
@@ -90,9 +95,6 @@ class BUCK:
         pair_name = self.get_pair_name(spec1, spec2)
         return self.get_pot(*self.COEFFS[pair_name], r)
 
-    def no_spec_msg(self, spec1, spec2):
-        return ""
-
     def get_table_name(self):
         return self.TABLENAME
 
@@ -107,6 +109,3 @@ class BUCK:
 
     def get_species(self):
         return self.SPECIES
-
-    def is_2b(self):
-        return self.TWO_BODY

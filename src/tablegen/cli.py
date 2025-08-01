@@ -5,16 +5,10 @@ import sys
 from .handlers import SHIK, BUCK, BUCK_EXT, TETER
 from .handlers import TRUNC3B, SW_3B
 from . import constants
-
-class ErrorHandlingParser(argparse.ArgumentParser):
-    def error(self, message):
-        sys.stderr.write('error: %s\n\n' % message)
-        self.print_help()
-        sys.exit(2)
-
+from . import utils
 
 def parse_args():
-    parser = ErrorHandlingParser(prog = "tablegen")
+    parser = utils.ErrorHandlingParser(prog = "tablegen")
 
     subparsers = parser.add_subparsers(dest="command", required=True, metavar = "style")
 
@@ -26,6 +20,7 @@ def parse_args():
     teter.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS, help = f"Number of points used in the table definition of the potential function. Default: {constants.DATAPOINTS}", metavar = '')
     teter.add_argument("-t", "--table_name", type = str, default = "TETER.table", help = f"Name of the created table file. Default: TETER.table", metavar = '')
     teter.add_argument("-p", "--plot", nargs=2, type = float, default = None, help = f"Plotting switch. When included the potential functions will be plotted in matplotlib with lower and upper bound specified. Example: -p -10 10.", metavar = "")
+    teter.add_argument("-s", "--support", action = utils.SupportAction, default = False, help = "Switch to show all currently supported elements of the potential. When specified all other arguments will be ignored. Dafault: False")
 
     teter.set_defaults(handler_class = TETER)
 
@@ -40,6 +35,7 @@ def parse_args():
     shik.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS, help = f"Number of points used in the table definition of the potential function. Default: {constants.DATAPOINTS}", metavar = '')
     shik.add_argument("-t", "--table_name", type = str, default = "SHIK.table", help = f"Name of the created table file. Default: SHIK.table", metavar = '')
     shik.add_argument("-p", "--plot", nargs=2, type = float, default = None, help = f"Plotting switch. When included the potential functions will be plotted in matplotlib with lower and upper bound specified. Example: -p -10 10.", metavar = "")
+    shik.add_argument("-s", "--support", action = utils.SupportAction, default = False, help = "Switch to show all currently supported elements of the potential. When specified all other arguments will be ignored. Dafault: False")
 
     shik.set_defaults(handler_class = SHIK)
 
@@ -105,7 +101,7 @@ def two_body(handler):
                     print(f"Pair name for {spec1} and {spec2} is {pair_name}")
                     visited.append(pair_name)
                     file.write(pair_name + "\n")
-                    file.write(f"N {handler.DATAPOINTS}\n\n")
+                    file.write(f"N {datapoints}\n\n")
                     potential = []
                     force = []
                     for i, r in enumerate(radius):
@@ -160,7 +156,7 @@ def three_body(handler, symcase = False):
         all_combos.remove(triplet_name)
 
         tb_file.write(f"{triplet[1]}\n{triplet[0]}\n{triplet[2]}\n")
-        tb_file.write(f"{handler.CUTOFF}\n")
+        tb_file.write(f"{cutoff}\n")
         tb_file.write(table_name + ".table\n")
 
         if orig or not is_symmetric:
@@ -174,11 +170,11 @@ def three_body(handler, symcase = False):
 
         if orig or not is_symmetric: #If not original triplet (two non-central elements swapped) and potential is symmetric existing table will be reused
             tab_file.write(triplet_name + "\n")
-            tab_file.write(f"N {handler.DATAPOINTS} rmin {handler.CUTOFF/handler.DATAPOINTS} rmax {handler.CUTOFF}\n\n")
+            tab_file.write(f"N {datapoints} rmin {cutoff/datapoints} rmax {cutoff}\n\n")
 
             ctr = 0
             if triplet[0] == triplet[2]:
-                print(f"Triplet {triplet_name} is symmetric. Working on generating a table of {(handler.DATAPOINTS**2) * (handler.DATAPOINTS + 1)} entries")
+                print(f"Triplet {triplet_name} is symmetric. Working on generating a table of {(datapoints**2) * (datapoints + 1)} entries")
                 for step, rij in enumerate(np.linspace(0, cutoff, datapoints + 1)[1:]):
                     for rik in np.linspace(rij, cutoff, datapoints - step):
                         for theta in np.linspace(np.pi/(4*datapoints), np.pi - np.pi/(4*datapoints), 2*datapoints):
@@ -191,7 +187,7 @@ def three_body(handler, symcase = False):
                     print(f"Progress: {round(100*(step + 1)/datapoints, 3)}%")
 
             else:
-                print(f"Triplet {triplet_name} is asymmetric. Working on generating a table of {2*(handler.DATAPOINTS**3)} entries")
+                print(f"Triplet {triplet_name} is asymmetric. Working on generating a table of {2*(datapoints**3)} entries")
                 for step, rij in enumerate(np.linspace(0, cutoff, datapoints + 1)[1:]):
                     for rik in np.linspace(0, cutoff, datapoints + 1)[1:]:
                         for theta in np.linspace(np.pi/(4*datapoints), np.pi - np.pi/(4*datapoints), 2*datapoints):

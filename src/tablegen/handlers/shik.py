@@ -1,11 +1,17 @@
 import sys
 import numpy as np
 import mpmath as mp
-from tablegen import constants
 
-class SHIK:
+from tablegen import constants
+from tablegen import utils
+
+from .base_handler import BASE2B
+
+class SHIK(BASE2B):
 
     def __init__(self, args):
+        super().__init__()
+
         self.TABLENAME = args.table_name
         self.PLOT = args.plot
         self.SPECIES = args.species
@@ -115,5 +121,84 @@ class SHIK:
     def get_species(self):
         return self.SPECIES
 
-    def is_2b(self):
-        return self.TWO_BODY
+    @staticmethod
+    def display_support():
+        print("\nSUPPOTED ELEMENTS AND THEIR CHARGES:\n")
+
+        atom_str_len = max([len(a) for a in constants.SHIK_CHARGES.keys()] + [len("ATOM")]) + SHIK.SUPPORT_SPACING
+
+        charge_str_len = len("CHARGE")
+        max_left = 1
+        max_right = 1
+        for charge in constants.SHIK_CHARGES.values():
+            mod_c = utils.format_min_dec(charge, 1).strip()
+            charge_str_len = max(charge_str_len, len(mod_c))
+            whole, dec = mod_c.split(".")
+            max_left = max(max_left, len(whole))
+            max_right = max(max_right, len(dec))
+
+        charge_str_len = max(max_left + max_right + 1, charge_str_len)
+        dec_pos = int(round(charge_str_len/2))
+        dec_pos = max(dec_pos, max_left)
+        dec_pos = min(dec_pos, charge_str_len - max_right - 1)
+        charge_str_len += SHIK.SUPPORT_SPACING
+
+        print("\t" + "ATOM".ljust(atom_str_len) + "CHARGE".ljust(charge_str_len))
+
+
+        for atom, charge in constants.SHIK_CHARGES.items():
+            res_str = "\t" + atom.ljust(atom_str_len)
+            if atom == "O":
+                res_str += "??? (composition dependent)".ljust(charge_str_len)
+            else:
+                res_str += utils.align_by_decimal(
+                           string = utils.format_min_dec(charge, 1),
+                           size = charge_str_len,
+                           dec_pos = dec_pos,
+                           )
+            print(res_str)
+
+        print("\nPAIRWISE COEFFICIENTS:\n")
+
+        pair_str_len = max([len(p) for p in constants.SHIK_coeffs.keys()] + [len("PAIR")]) + SHIK.SUPPORT_SPACING
+
+        num_coeffs = len(constants.SHIK_COEFF_HEADINGS)
+        column_params = list()
+
+        for i in range(num_coeffs):
+            coeff_str_len = len(constants.SHIK_COEFF_HEADINGS[i])
+            max_left = 1
+            max_right = 1
+            for coeffs in constants.SHIK_coeffs.values():
+                mod_c = utils.format_min_dec(coeffs[i], 1).strip()
+                c_len = len(mod_c)
+                if c_len > coeff_str_len:
+                    coeff_str_len = c_len
+
+                whole, dec = mod_c.split(".")
+                max_left = max(max_left, len(whole))
+                max_right = max(max_right, len(dec))
+
+            coeff_str_len = max(max_left + max_right + 1, coeff_str_len)
+            dec_pos = int(round(coeff_str_len/2))
+            dec_pos = max(dec_pos, max_left)
+            dec_pos = min(dec_pos, coeff_str_len - max_right - 1)
+            coeff_str_len += SHIK.SUPPORT_SPACING
+            column_params.append((coeff_str_len, dec_pos))
+
+        res_str = "PAIR".ljust(pair_str_len)
+        for i in range(num_coeffs):
+            res_str += constants.SHIK_COEFF_HEADINGS[i].center(column_params[i][0])
+        print("\t" + res_str)
+
+        for pair, coeffs in constants.SHIK_coeffs.items():
+            res_str = "\t" + pair.ljust(pair_str_len)
+            for i in range(num_coeffs):
+                res_str += utils.align_by_decimal(
+                    string = utils.format_min_dec(coeffs[i], 1),
+                    size = column_params[i][0],
+                    dec_pos = column_params[i][1],
+                    )
+
+            print(res_str)
+

@@ -4,12 +4,11 @@ import mpmath as mp
 import itertools as it
 
 from tablegen import constants
+from .base_handler import BASE3B
 
-class TRUNC3B:
+class TRUNC3B(BASE3B):
     
     def __init__(self, args):
-        self.TWO_BODY = False
-        self.SYMMETRIC = True
         self.TABLENAME = args.table_name
         self.CUTOFF = float(args.cutoff)
         self.DATAPOINTS = args.data_points
@@ -111,12 +110,6 @@ class TRUNC3B:
 
     def get_datapoints(self):
         return self.DATAPOINTS
-
-    def is_symmetric(self):
-        return self.SYMMETRIC
-
-    def is_2b(self):
-        return self.TWO_BODY
 
     def get_all_atom_combos(self):
         elem_set = set()

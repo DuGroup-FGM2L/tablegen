@@ -3,9 +3,14 @@ import numpy as np
 import mpmath as mp
 from tablegen import constants
 
-class BUCK_EXT:
+from .base_handler import BASE2B
+
+
+class BUCK_EXT(BASE2B):
     
     def __init__(self, args):
+        super().__init__()
+
         self.TABLENAME = args.table_name
         self.PLOT = args.plot
 
@@ -86,7 +91,6 @@ class BUCK_EXT:
         return float((A / rho) * mp.exp(-r / rho) - 6 * C * r**-7 * (1 - mp.exp(-rp**6)) + (6 * C / (43**6 * rho**6)) * r**-1 * mp.exp(-rp**6) + 12 * D * r**-13)
 
 
-
     def get_pot(self, A, rho, C, D, r):
         A = mp.mpf(A)
         rho = mp.mpf(rho)
@@ -107,9 +111,6 @@ class BUCK_EXT:
         pair_name = self.get_pair_name(spec1, spec2)
         return self.get_pot(*self.COEFFS[pair_name], r)
 
-    def no_spec_msg(self, spec1, spec2):
-        return ""
-
     def get_table_name(self):
         return self.TABLENAME
 
@@ -124,6 +125,3 @@ class BUCK_EXT:
 
     def get_species(self):
         return self.SPECIES
-
-    def is_2b(self):
-        return self.TWO_BODY

@@ -4,11 +4,13 @@ import mpmath as mp
 import itertools as it
 
 from tablegen import constants
+from .base_handler import BASE3B
 
 
-class SW_3B:
+class SW_3B(BASE3B):
     
     def __init__(self, args):
+        super().__init__()
         self.TWO_BODY = False
         self.SYMMETRIC = False
         self.TABLENAME = args.table_name
@@ -56,7 +58,7 @@ class SW_3B:
             except ValueError:
                 sys.exit("Stillinger-Weber potential coefficients should be real numbers.")
 
-            if self.TRIPLETS[i][0] != self.TRIPLETS[i][2]:
+            if self.TRIPLETS[i][0] != self.TRIPLETS[i][2] and not self.SYMMETRIC:
                 try:
                     gammaik = float(input(f"({triplet}) gamma ({self.TRIPLETS[i][1]}-{self.TRIPLETS[i][2]}): "))
                 except ValueError:
