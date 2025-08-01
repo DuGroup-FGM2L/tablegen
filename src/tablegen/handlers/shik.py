@@ -21,6 +21,11 @@ class SHIK(BASE2B):
         self.GAMMA = mp.mpf(args.gamma)
         self.DATAPOINTS = args.data_points
 
+        for spec in self.SPECIES:
+            if spec not in constants.SHIK_SPECIES:
+                print(f"ERROR: Unsopported species {spec}. Run tablegen shik -s to view atom support.")
+                sys.exit(1)
+
         self.CHARGES = constants.SHIK_CHARGES
         self.CHARGES["O"] = self.get_oxygen_charge(args.structure_file)
 
@@ -33,6 +38,7 @@ class SHIK(BASE2B):
         print()
 
         self.TWO_BODY = True
+
         
     def get_force(self, A, B, C, D, q_a, q_b, r, *args):
         A = mp.mpf(A)
@@ -93,6 +99,7 @@ class SHIK(BASE2B):
 
     def get_oxygen_charge(self, filename):
         lines = open(filename).readlines()
+        #Need to implement reading all types of file
         header_lines = next((i for i, line in enumerate(lines) if "Atoms" in line)) + 1
         atom_lines = np.loadtxt(skiprows = header_lines, fname = filename)
         charge_mapper = np.vectorize(lambda x: self.CHARGES[self.SPECIES[int(x) - 1]])

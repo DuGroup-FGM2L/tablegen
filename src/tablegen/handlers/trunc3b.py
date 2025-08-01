@@ -9,6 +9,7 @@ from .base_handler import BASE3B
 class TRUNC3B(BASE3B):
     
     def __init__(self, args):
+        super().__init__()
         self.TABLENAME = args.table_name
         self.CUTOFF = float(args.cutoff)
         self.DATAPOINTS = args.data_points
