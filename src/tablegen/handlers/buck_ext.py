@@ -1,7 +1,9 @@
 import re, sys
 import numpy as np
 import mpmath as mp
+
 from tablegen import constants
+from tablegen import utils
 
 from .base_handler import BASE2B
 
@@ -15,17 +17,26 @@ class BUCK_EXT(BASE2B):
         self.PLOT = args.plot
 
         self.TWO_BODY = True
-        spec_set = set()
+        elems = set()
+
+        self.NEED_FILE = not args.file is None
+        if self.NEED_FILE:
+            self.LAMMPS_FILENAME = args.file
+
 
         names = list()
         for pair in args.pairs:
             spec_lst = re.sub(r'\s+', '', pair).split("-")
+            elems.add(spec_lst[0])
+            elems.add(spec_lst[1])
             if len(spec_lst) != 2:
                 print("\nERROR: Each pair should consist of exactly two atomic species.\n")
                 sys.exit(1)
             names.append(pair)
 
         self.COEFFS = dict()
+
+        self.SPECIES = list(elems)
 
 
         print("Please provide extended Buckingham coefficients A, rho, C, and D for the following pairs:")
@@ -116,3 +127,23 @@ class BUCK_EXT(BASE2B):
 
     def get_pairs(self):
         return self.COEFFS.keys()
+
+    def lammps_file_needed(self):
+        return self.NEED_FILE
+
+    def gen_file(self):
+        lmp_file = open(self.LAMMPS_FILENAME, "w")
+
+        text = utils.generate_filetext_2b(
+            elements = self.SPECIES,
+            pairs = self.COEFFS.keys(),
+            datapoints = self.DATAPOINTS,
+            tablename = self.TABLENAME,
+            cutoff = self.CUTOFF,
+            units = "???",
+            )
+
+        lmp_file.write(text)
+
+        lmp_file.close()
+

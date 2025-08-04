@@ -32,6 +32,9 @@ class BASE2B():
     def is_2b(self):
         return self.TWO_BODY
 
+    def lammps_file_needed(self):
+        return False
+
     @staticmethod
     def display_support():
         print("NO SUPPORT MESSAGE IMPLEMENTED")

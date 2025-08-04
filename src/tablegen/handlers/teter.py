@@ -14,16 +14,24 @@ class TETER(BASE2B):
 
         self.TABLENAME = args.table_name
         self.PLOT = args.plot
+        self.SPECIES = args.species
+        self.CUTOFF = mp.mpf(args.cutoff)
+        self.DATAPOINTS = args.data_points
+
+        self.NEED_FILE = not args.file is None
+        if self.NEED_FILE:
+            self.LAMMPS_FILENAME = args.file
 
         self.TWO_BODY = True
 
-        self.SPECIES = args.species
+        self.UNITS = "real"
 
         self.CHARGES = constants.TETER_CHARGES
 
         self.COEFFS = dict()
 
         visited = list()
+        filtered_species = list()
         for spec in self.SPECIES:
             pair_name = None
 
@@ -36,8 +44,11 @@ class TETER(BASE2B):
             elif pair_name in visited:
                 print(f"\nWARNING: Duplicate entry for atom {spec} will be ignored.\n")
             else:
+                filtered_species.append(spec)
                 visited.append(pair_name)
                 self.COEFFS[pair_name] = constants.TETER_COEFFS[pair_name]
+
+        self.SPECIES = filtered_species
 
         print("Charges:\n")
         for spec in self.SPECIES:
@@ -46,8 +57,6 @@ class TETER(BASE2B):
         print()
 
 
-        self.CUTOFF = mp.mpf(args.cutoff)
-        self.DATAPOINTS = args.data_points
 
     def get_pairs(self):
         return self.COEFFS.keys()
@@ -194,3 +203,75 @@ class TETER(BASE2B):
                     )
 
             print(res_str)
+
+    def lammps_file_needed(self):
+        return self.NEED_FILE
+
+    def gen_file(self):
+        lmp_file = open(self.LAMMPS_FILENAME, "w")
+
+        text = utils.generate_filetext_2b(
+            elements = self.SPECIES,
+            pairs = self.COEFFS.keys(),
+            datapoints = self.DATAPOINTS,
+            tablename = self.TABLENAME,
+            cutoff = self.CUTOFF,
+            units = self.UNITS,
+            extra_pairstyle = "coul/long 8.0"
+            )
+
+
+        text += "\n\n#SUGGESTED PROCEDURE\n\n"
+
+        text += "timestep\t\t\t0.001 #1 femtosecond\n\n"
+
+        for i in range(len(self.SPECIES)):
+            text += "set".ljust(constants.LAMMPS_FILE_TAB) + f"type {i + 1} charge {self.CHARGES[self.SPECIES[i]]}\n"
+        
+        text += "\n"
+        text += "kspace_style".ljust(constants.LAMMPS_FILE_TAB) + "ewald 0.000001\n\n"
+        text += "pair_coeff".ljust(constants.LAMMPS_FILE_TAB) + "* * coul/long\n"
+
+
+        #Need to test and verify procedure
+        """
+        text += "\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "timestep equal 1.0e-12 #s\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "quenchrate equal 5 #K/ps\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "start_temp equal 6000 #K\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "room_temp equal 300 #K\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "quench_time equal 570 #ps\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "quench_steps equal ${quench_time}*1.0e-12/(${timestep}*$(dt))\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "room_equil equal 10 #ps\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "room_equil_steps equal ${room_equil}*1.0e-12/(${timestep}*$(dt))\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "sit_time equal 80 #ps\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "sitsteps equal ${melt_time}*1.0e-12/(${timestep}*$(dt))\n"
+
+        text += "minimize".ljust(constants.LAMMPS_FILE_TAB) + "0 1.0e-8 1000 10000\n"
+        text += "velocity".ljust(constants.LAMMPS_FILE_TAB) + "all create ${room_temp} 12345\n\n"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "initial_room_equil all nvt temp ${room_temp} ${room_temp} $(100.0*dt)"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${room_equil_steps}"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "initial_room_equil"
+
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "melt all nvt temp ${start_temp} ${start_temp} $(100.0*dt)"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${sit_steps}"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "melt"
+
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "melt all npt temp ${start_temp} ${start_temp} $(100.0*dt)"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${sit_steps}"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "melt"
+
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "quench all npt temp ${start_temp} ${room_temp} $(100.0*dt)"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${quench_steps}"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "quench"
+
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "room_sit all npt temp ${room_temp} ${room_temp} $(100.0*dt)"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${sit_steps}"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "room_sit"
+
+        text += "write_data".ljust(constants.LAMMPS_FILE_TAB) + "".join(elements).structure
+        """
+
+        lmp_file.write(text)
+
+        lmp_file.close()

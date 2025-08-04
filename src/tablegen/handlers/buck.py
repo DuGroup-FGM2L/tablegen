@@ -3,8 +3,10 @@ import numpy as np
 import mpmath as mp
 
 from tablegen import constants
+from tablegen import utils
 
 from .base_handler import BASE2B
+
 
 class BUCK(BASE2B):
     
@@ -16,15 +18,26 @@ class BUCK(BASE2B):
 
         self.TWO_BODY = True
 
+        self.NEED_FILE = not args.file is None
+        if self.NEED_FILE:
+            self.LAMMPS_FILENAME = args.file
+
+
         names = list()
+        elems = set()
         for pair in args.pairs:
             spec_lst = re.sub(r'\s+', '', pair).split("-")
+            elems.add(spec_lst[0])
+            elems.add(spec_lst[1])
             if len(spec_lst) != 2:
                 print("\nERROR: Each pair should consist of exactly two atomic species.\n")
                 sys.exit(1)
             names.append(pair)
 
+        self.SPECIES = list(elems)
+
         self.COEFFS = dict()
+
 
         print("Please provide Buckingham coefficients A, rho, and C for the following pairs:")
         visited = list()
@@ -94,3 +107,22 @@ class BUCK(BASE2B):
 
     def get_pairs(self):
         return self.COEFFS.keys()
+
+    def lammps_file_needed(self):
+        return self.NEED_FILE
+
+    def gen_file(self):
+        lmp_file = open(self.LAMMPS_FILENAME, "w")
+
+        text = utils.generate_filetext_2b(
+            elements = self.SPECIES,
+            pairs = self.COEFFS.keys(),
+            datapoints = self.DATAPOINTS,
+            tablename = self.TABLENAME,
+            cutoff = self.CUTOFF,
+            units = "???",
+            )
+
+        lmp_file.write(text)
+
+        lmp_file.close()

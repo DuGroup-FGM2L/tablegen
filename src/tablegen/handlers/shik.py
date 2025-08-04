@@ -23,6 +23,12 @@ class SHIK(BASE2B):
         self.STOICS = list()
         self.COEFFS = dict()
 
+        self.UNITS = "metal"
+
+        self.NEED_FILE = not args.file is None
+        if self.NEED_FILE:
+            self.LAMMPS_FILENAME = args.file
+
         for spec in args.species:
             if ":" not in spec:
                 stoic = "1"
@@ -237,4 +243,29 @@ class SHIK(BASE2B):
                     )
 
             print(res_str)
+
+    def lammps_file_needed(self):
+        return self.NEED_FILE
+
+    def gen_file(self):
+        lmp_file = open(self.LAMMPS_FILENAME, "w")
+
+        text = utils.generate_filetext_2b(
+            elements = self.SPECIES,
+            pairs = self.COEFFS.keys(),
+            datapoints = self.DATAPOINTS,
+            tablename = self.TABLENAME,
+            cutoff = self.CUTOFF,
+            units = self.UNITS,
+            )
+
+        text += "\n\n#SUGGESTED PROCEDURE\n\n"
+
+        for i in range(len(self.SPECIES)):
+            text += "set".ljust(constants.LAMMPS_FILE_TAB) + f"type {i + 1} charge {self.CHARGES[self.SPECIES[i]]}\n"
+
+
+        lmp_file.write(text)
+
+        lmp_file.close()
 
