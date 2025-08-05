@@ -76,7 +76,7 @@ tablegen [style] [options]
 $$
 \begin{gather*}
 V^{short} = A_{ij} \exp(-\frac{r_{ij}}{\rho_{ij}}) - \frac{C_{ij}}{r_{ij}^6}\\
-V^{\prime}= \frac{B_{ij}}{r^n} + D_{ij}\times r_{ij}^2
+V^{\prime}= \frac{B_{ij}}{r^n} + D_{ij}r_{ij}^2
 \end{gather*}
 $$
 
