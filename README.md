@@ -196,7 +196,22 @@ Standard options invoked:
 tablegen sw Si-O-Si -t silica -d 30 -c 5
 ```
 
+## 💡 LAMMPS input file generation
 
+All styles support minimal LAMMPS input file generation with the -f option:
+
+
+```bash
+tablegen shik -f
+```
+
+or to use custom input file name:
+
+```bash
+tablegen shik -f input.lammps
+```
+
+Some key details required by LAMMPS are written into the input file with their values as well as placeholders (???). For styles TETER and SHIK a suggested glass melt-quench procedure is also appended to the input file.
 
 
 ## 📚 Documentation
@@ -214,14 +229,15 @@ The project is modular:
 - `cli.py`: Main entry point, defines CLI and parses arguments
 - `handlers/`: Contains one handler class per potential type (`SHIK`, `BUCK`, etc.)
 - `constants.py`: Shared constants (e.g., cutoffs, physical constants, default coefficients)
+- `utils.py`: Supporting classes and functions used by cli and handlers
 - `__init__.py`: Exposes handler classes and version metadata
 - `pyproject.toml`: Build and dependency metadata
 
 Each handler:
 - Parses user-provided arguments
 - Validates species/pair/triplet input
-- Prompts for coefficients
-- Provides `eval_force` and `eval_pot` methods used by `two_body()` or `three_body()`
+- Prompts for coefficients if not hardcoded into constants
+- Provides `getter methods for cli to perform general operations
 
 ## 📈 Plotting
 
