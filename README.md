@@ -4,6 +4,7 @@ LAMMPS potential table generator for [LAMMPS](https://lammps.sandia.gov), develo
 
 **Tablegen** is a command-line utility for generating two-body and three-body potential tables for use with LAMMPS simulations. It supports several interaction models commonly used in materials science and glass chemistry, including:
 
+- Teter potential (parametrized by Du and coworkers)
 - SHIK potential (Buckingham + Wolf summation)
 - Classical Buckingham potential
 - Extended Buckingham potential with softening
