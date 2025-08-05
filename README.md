@@ -214,6 +214,16 @@ tablegen shik -f input.lammps
 
 Some key details required by LAMMPS are written into the input file with their values as well as placeholders (???). For styles TETER and SHIK a suggested glass melt-quench procedure is also appended to the input file.
 
+## ⚛️  Suppported elements
+
+For some styles (TETER and SHIK) potential generation depends on built-in parameters of their forms. To see what elements are supported and what pairwise interactions are defined use the -s option:
+
+```bash
+tablegen teter -s
+```
+
+This will show the support message and exit without generating any files.
+
 
 ## 📚 Documentation
 
