@@ -60,7 +60,8 @@ class SHIK(BASE2B):
                 for spec2 in self.SPECIES:
                     pair_name = f"{spec1}-{spec2}"
                     if pair_name not in constants.SHIK_COEFFS.keys():
-                        print("\nWARNING: The {pair_name} interaction is not defined by this potential.\n")
+                        if f"{spec2}-{spec1}" not in constants.SHIK_COEFFS.keys():
+                            print(f"\nWARNING: The {pair_name} interaction is not defined by this potential.\n")
                     else:
                         self.COEFFS[pair_name] = constants.SHIK_COEFFS[pair_name]
             else:
@@ -257,12 +258,63 @@ class SHIK(BASE2B):
             tablename = self.TABLENAME,
             cutoff = self.CUTOFF,
             units = self.UNITS,
+            timestep =  "0.0016 #1.6 fs"
             )
 
         text += "\n\n#SUGGESTED PROCEDURE\n\n"
 
         for i in range(len(self.SPECIES)):
             text += "set".ljust(constants.LAMMPS_FILE_TAB) + f"type {i + 1} charge {self.CHARGES[self.SPECIES[i]]}\n"
+
+        text += "#This procedure follows multiple papers description of a\n"
+        text += "#melt-quench process for oxide glasses with SHIK potentials.\n\n"
+
+        text += "\n"
+        text += "#Frequency of system-wide properties output\n"
+        text += "thermo".ljust(constants.LAMMPS_FILE_TAB) + "1000\n"
+        text += "thermo_style".ljust(constants.LAMMPS_FILE_TAB) + "custom step temp etotal pe vol density press\n"
+        text += "thermo_modify".ljust(constants.LAMMPS_FILE_TAB) + "flush yes\n"
+        text += "\n"
+
+
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "quench_rate equal 1 #K/ps\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "timestep equal 1.0e-12 #s\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "start_temp equal 4000 #K\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "end_temp equal 300 #K\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "nvt_sit_time equal 1000 #ps\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "npt_sit_time equal 500 #ps\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "npt_press equal 0.1 #GPa\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "room_sit_time equal 100 #ps\n"
+        text += "\n"
+
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "nvt_sit_timestep equal $(round(v_nvt_sit_time*1.0e-12/(dt*v_timestep)))\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "room_sit_timestep equal $(round(v_room_sit_time*1.0e-12/(dt*v_timestep)))\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "npt_sit_timestep equal $(round(v_npt_sit_time*1.0e-12/(dt*v_timestep)))\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "npt_press_correct equal $(v_npt_press*10000)\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "quench_timestep equal $(round((v_start_temp - v_end_temp)*1.0e-12/(dt*v_quench_rate*v_timestep)))\n"
+
+        text += "\n"
+
+        text += "minimize".ljust(constants.LAMMPS_FILE_TAB) + "1.0e-8 1.0e-8 100000 10000000\n"
+        text += "velocity".ljust(constants.LAMMPS_FILE_TAB) + "all create ${start_temp} 12345\n"
+        text += "\n"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "relax all nvt temp ${start_temp} ${start_temp} $(1000.0*dt)\n"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${nvt_sit_timestep}\n"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "relax\n"
+        text += "\n"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "npt_sit all npt temp ${start_temp} ${start_temp} $(100.0*dt) iso ${npt_press_correct} ${npt_press_correct} $(1000.0*dt)\n"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${npt_sit_timestep}\n"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "npt_sit\n"
+        text += "\n"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "quench all npt temp ${start_temp} ${end_temp} $(100.0*dt) iso 0 0 $(100.0*dt)\n"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${quench_timestep}\n"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "quench\n"
+        text += "\n"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "relax all npt temp ${end_temp} ${end_temp} $(1000.0*dt) iso 0 0 $(1000.0*dt)\n"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${room_sit_timestep}\n"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "relax\n"
+        text += "\n"
+        text += "write_data".ljust(constants.LAMMPS_FILE_TAB) + "glass_" + "".join(self.SPECIES) + ".structure\n"
 
 
         lmp_file.write(text)

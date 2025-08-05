@@ -4,6 +4,8 @@ import mpmath as mp
 import itertools as it
 
 from tablegen import constants
+from tablegen import utils
+
 from .base_handler import BASE3B
 
 
@@ -13,13 +15,20 @@ class SW_3B(BASE3B):
         super().__init__()
         self.TWO_BODY = False
         self.SYMMETRIC = False
+
         self.TABLENAME = args.table_name
+
         self.CUTOFF = float(args.cutoff)
         self.DATAPOINTS = args.data_points
 
         self.TRIPLETS = list()
         self.TRIPLET_NAMES = list()
 
+        self.NEED_FILE = not args.file is None
+        if self.NEED_FILE:
+            self.LAMMPS_FILENAME = args.file
+
+        elems = set()
         self.ORIG_TRIPLETS = 0
         for triplet in args.triplets:
             self.ORIG_TRIPLETS += 1
@@ -27,9 +36,15 @@ class SW_3B(BASE3B):
             self.TRIPLET_NAMES.append(nowhite)
             split_triplet = nowhite.split("-")
             if len(split_triplet) == 3:
+                elems.add(split_triplet[0])
+                elems.add(split_triplet[1])
+                elems.add(split_triplet[2])
                 self.TRIPLETS.append(split_triplet)
             else:
-                raise RuntimeError("Each triplet has to contain three elements (two dashes). Please read the help message for any three-body generator.")
+                print("ERROR: Each triplet has to contain three elements (two dashes). Please read the help message for any three-body generator.")
+                sys.exit(1)
+
+        self.SPECIES = list(elems)
 
         self.COEFFS = dict()
         for i, triplet in enumerate(self.TRIPLET_NAMES):
@@ -151,7 +166,7 @@ class SW_3B(BASE3B):
 
 
     def get_table_name(self):
-        return self.TABLENAME
+        return self.TABLENAME + "3B.table"
 
     def get_triplets(self):
         return [(i < self.ORIG_TRIPLETS, trp) for i, trp in enumerate(self.TRIPLETS)]
@@ -174,3 +189,21 @@ class SW_3B(BASE3B):
             for el in trpl:
                 elem_set.add(el)
         return ["-".join(trpl) for trpl in it.product(elem_set, repeat = 3)]
+
+    def lammps_file_needed(self):
+        return self.NEED_FILE
+
+    def gen_file(self):
+        lmp_file = open(self.LAMMPS_FILENAME, "w")
+
+        text = utils.generate_filetext_3b(
+            elements = self.SPECIES,
+            tablename = self.TABLENAME + ".3b",
+            )
+
+        lmp_file.write(text)
+
+        lmp_file.close()
+
+    def get_3b_tablename(self):
+        return self.TABLENAME + ".3b"

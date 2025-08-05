@@ -217,13 +217,11 @@ class TETER(BASE2B):
             tablename = self.TABLENAME,
             cutoff = self.CUTOFF,
             units = self.UNITS,
-            extra_pairstyle = "coul/long 8.0"
+            timestep = "0.001 #1 femtosecond",
+            extra_pairstyle = "coul/long 12"
             )
 
-
-        text += "\n\n#SUGGESTED PROCEDURE\n\n"
-
-        text += "timestep\t\t\t0.001 #1 femtosecond\n\n"
+        text += "\n\n#COULOMBIC INTERACTIONS\n\n"
 
         for i in range(len(self.SPECIES)):
             text += "set".ljust(constants.LAMMPS_FILE_TAB) + f"type {i + 1} charge {self.CHARGES[self.SPECIES[i]]}\n"
@@ -233,44 +231,53 @@ class TETER(BASE2B):
         text += "pair_coeff".ljust(constants.LAMMPS_FILE_TAB) + "* * coul/long\n"
 
 
-        #Need to test and verify procedure
-        """
+        text += "\n\n#SUGGESTED PROCEDURE\n\n"
+        text += "#This procedure follows multiple papers description of a\n"
+        text += "#melt-quench process for oxide glasses with Teter potentials.\n\n"
+
+        text += "\n"
+        text += "#Frequency of system-wide properties output\n"
+        text += "thermo".ljust(constants.LAMMPS_FILE_TAB) + "1000\n"
+        text += "thermo_style".ljust(constants.LAMMPS_FILE_TAB) + "custom step temp etotal pe vol density press\n"
+        text += "thermo_modify".ljust(constants.LAMMPS_FILE_TAB) + "flush yes\n"
         text += "\n"
         text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "timestep equal 1.0e-12 #s\n"
         text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "quenchrate equal 5 #K/ps\n"
         text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "start_temp equal 6000 #K\n"
         text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "room_temp equal 300 #K\n"
-        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "quench_time equal 570 #ps\n"
-        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "quench_steps equal ${quench_time}*1.0e-12/(${timestep}*$(dt))\n"
         text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "room_equil equal 10 #ps\n"
-        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "room_equil_steps equal ${room_equil}*1.0e-12/(${timestep}*$(dt))\n"
         text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "sit_time equal 80 #ps\n"
-        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "sitsteps equal ${melt_time}*1.0e-12/(${timestep}*$(dt))\n"
 
-        text += "minimize".ljust(constants.LAMMPS_FILE_TAB) + "0 1.0e-8 1000 10000\n"
+        text += "\n"
+
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "quench_steps equal $(round((v_start_temp - v_room_temp)*1.0e-12/(dt*v_quenchrate*v_timestep)))\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "sit_steps equal $(round(v_sit_time*1.0e-12/(dt*v_timestep)))\n"
+        text += "variable".ljust(constants.LAMMPS_FILE_TAB) + "room_equil_steps equal $(round(v_room_equil*1.0e-12/(dt*v_timestep)))\n"
+        text += "\n"
+
+        text += "minimize".ljust(constants.LAMMPS_FILE_TAB) + "1.0e-8 1.0e-8 100000 10000000\n"
         text += "velocity".ljust(constants.LAMMPS_FILE_TAB) + "all create ${room_temp} 12345\n\n"
-        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "initial_room_equil all nvt temp ${room_temp} ${room_temp} $(100.0*dt)"
-        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${room_equil_steps}"
-        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "initial_room_equil"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "initial_room_equil all nvt temp ${room_temp} ${room_temp} $(100.0*dt)\n"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${room_equil_steps}\n"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "initial_room_equil\n\n"
 
-        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "melt all nvt temp ${start_temp} ${start_temp} $(100.0*dt)"
-        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${sit_steps}"
-        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "melt"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "melt all nvt temp ${start_temp} ${start_temp} $(100.0*dt)\n"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${sit_steps}\n"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "melt\n\n"
 
-        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "melt all npt temp ${start_temp} ${start_temp} $(100.0*dt)"
-        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${sit_steps}"
-        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "melt"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "melt all npt temp ${start_temp} ${start_temp} $(100.0*dt) iso 0 0 $(1000.0*dt)\n"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${sit_steps}/2\n"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "melt\n\n"
 
-        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "quench all npt temp ${start_temp} ${room_temp} $(100.0*dt)"
-        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${quench_steps}"
-        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "quench"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "quench all npt temp ${start_temp} ${room_temp} $(100.0*dt) iso 0 0 $(1000.0*dt)\n"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${quench_steps}\n"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "quench\n\n"
 
-        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "room_sit all npt temp ${room_temp} ${room_temp} $(100.0*dt)"
-        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${sit_steps}"
-        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "room_sit"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "room_sit all npt temp ${room_temp} ${room_temp} $(100.0*dt) iso 0 0 $(1000.0*dt)\n"
+        text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${sit_steps}\n"
+        text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "room_sit\n\n"
 
-        text += "write_data".ljust(constants.LAMMPS_FILE_TAB) + "".join(elements).structure
-        """
+        text += "write_data".ljust(constants.LAMMPS_FILE_TAB) + "glass_" + "".join(self.SPECIES) + ".structure\n"
 
         lmp_file.write(text)
 

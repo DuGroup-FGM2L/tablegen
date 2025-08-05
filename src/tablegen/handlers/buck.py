@@ -27,11 +27,12 @@ class BUCK(BASE2B):
         elems = set()
         for pair in args.pairs:
             spec_lst = re.sub(r'\s+', '', pair).split("-")
-            elems.add(spec_lst[0])
-            elems.add(spec_lst[1])
             if len(spec_lst) != 2:
                 print("\nERROR: Each pair should consist of exactly two atomic species.\n")
                 sys.exit(1)
+
+            elems.add(spec_lst[0])
+            elems.add(spec_lst[1])
             names.append(pair)
 
         self.SPECIES = list(elems)

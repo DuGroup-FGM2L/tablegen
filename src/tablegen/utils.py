@@ -115,12 +115,60 @@ def align_by_decimal(string, size, dec_pos):
 
     return " " * room_left + string + " " * room_right
 
-def generate_filetext_2b(elements, pairs, datapoints, tablename, cutoff, units, extra_pairstyle = ""):
+def generate_filetext_3b(elements, tablename = "???", units = "???", timestep = "???", extra_pairstyle = ""):
     text = constants.GENERATION_COMMENT
+
+    text += "\n\n#REQUIRED USER SPECIFIED DEFINITIONS\n\n"
+
+    text += "#Determines what attributes atoms have\n"
+    text += "atom_style".ljust(constants.LAMMPS_FILE_TAB) + "???\n"
+    text += "boundary".ljust(constants.LAMMPS_FILE_TAB) + "??? ??? ???\n"
+
+    text += "#Unit set determined by the potential\n"
+    text += "units".ljust(constants.LAMMPS_FILE_TAB) + f"{units}\n"
+
+    text += "#Defines initial atomic positions by providing a file\n"
+    text += "read_data".ljust(constants.LAMMPS_FILE_TAB) + "???\n"
 
     text += "\n\n#REQUIRED SECTION\n\n"
 
-    text += "units".ljust(constants.LAMMPS_FILE_TAB) + "metal\n"
+    
+    for i in range(len(elements)):
+        if elements[i] in constants.ATOMIC_MASSES:
+            text += "mass".ljust(constants.LAMMPS_FILE_TAB) + f"{i + 1} {constants.ATOMIC_MASSES[elements[i]]}\n"
+        else:
+            text += "mass".ljust(constants.LAMMPS_FILE_TAB) + f"{i + 1} ???\n"
+
+    text += "\n\n"
+    
+    text += "pair_style".ljust(constants.LAMMPS_FILE_TAB) + f"hybrid/overlay threebody/table " + extra_pairstyle + "\n\n"
+
+    text += "pair_coeff".ljust(constants.LAMMPS_FILE_TAB) +f"* * threebody/table {tablename} " + " ".join(elements) + "\n"
+
+    text += "\n\n#USEFUL DEFINITIONS\n\n"
+    for i in range(len(elements)):
+        text += "group".ljust(constants.LAMMPS_FILE_TAB) + f"{elements[i]} type {i + 1}\n"
+
+    return text
+    
+
+def generate_filetext_2b(elements, pairs, datapoints, tablename, cutoff, units, timestep = "???", extra_pairstyle = ""):
+    text = constants.GENERATION_COMMENT
+
+    text += "\n\n#REQUIRED USER SPECIFIED DEFINITIONS\n\n"
+
+    text += "#Determines what attributes atoms have\n"
+    text += "atom_style".ljust(constants.LAMMPS_FILE_TAB) + "???\n"
+    text += "boundary".ljust(constants.LAMMPS_FILE_TAB) + "??? ??? ???\n"
+
+    text += "#Unit set determined by the potential\n"
+    text += "units".ljust(constants.LAMMPS_FILE_TAB) + f"{units}\n"
+
+    text += "#Defines initial atomic positions by providing a file\n"
+    text += "read_data".ljust(constants.LAMMPS_FILE_TAB) + "???\n"
+
+    text += "\n\n#REQUIRED SECTION\n\n"
+
     
     for i in range(len(elements)):
         if elements[i] in constants.ATOMIC_MASSES:
@@ -141,9 +189,16 @@ def generate_filetext_2b(elements, pairs, datapoints, tablename, cutoff, units, 
 
         text += "pair_coeff".ljust(constants.LAMMPS_FILE_TAB) +f"{elements.index(elem1) + 1} {elements.index(elem2) + 1} table {tablename} {pair} {cutoff}\n"
 
+    text += "\n"
+    text += "timestep".ljust(constants.LAMMPS_FILE_TAB) + f"{timestep}\n"
+
     text += "\n\n#USEFUL DEFINITIONS\n\n"
     for i in range(len(elements)):
         text += "group".ljust(constants.LAMMPS_FILE_TAB) + f"{elements[i]} type {i + 1}\n"
+
+
+
+
 
 
     return text

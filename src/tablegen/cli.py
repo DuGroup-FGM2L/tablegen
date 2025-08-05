@@ -72,15 +72,17 @@ def parse_args():
     trunc3b.add_argument("-t", "--table_name", type = str, default = "TRUNC", help = f"Name (no extension) of two files that will be created - three-body + tabulated files. Default: TRUNC.3b, TRUNC.table")
     trunc3b.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS3B, help = f"Number of steps used in tabulating interatomic separation distances. Angle is tabulated with 2N entries. In symmetric case the number of table entries will be M = (N+1)N^2 and in asymmetric 2N^3. Default: {constants.DATAPOINTS3B}")
     trunc3b.add_argument("-c", "--cutoff", type = float, default = constants.CUTOFF3B, help = f"Table cutoff beyond which no potentials or forces will be generated. Default: {constants.CUTOFF3B} Å")
+    trunc3b.add_argument("-f", "--file",  nargs = "?", const = "in.TRUNC3B", help = "A switch for generating a LAMMPS formatted input file incorporating all of the information that could be implied from the potential selected. Desired file name can be provided as a positional argument. Default: in.TRUNC3B")
 
     trunc3b.set_defaults(handler_class = TRUNC3B)
 
     sw_3b = subparsers.add_parser("3b_sw", help = "Argument parser for generating tables based on Stilinger-Webber potentials.", formatter_class = utils.NoMetavarHelpFormatter)
 
     sw_3b.add_argument("triplets", nargs = "+", type = str, default = [], help = "Ttiplets of atoms in the format B-A-C where A is the central atom.")
-    sw_3b.add_argument("-t", "--table_name", type = str, default = "SW", help = f"Name (no extension) of two files that will be created - three-body + tabulated files. Default: SW.3b, SW.table")
+    sw_3b.add_argument("-t", "--table_name", type = str, default = "SW", help = f"Name (no extension) of two files that will be created - three-body + tabulated files. Default: SW.3b, SW3B.table")
     sw_3b.add_argument("-d", "--data_points", type = int, default = constants.DATAPOINTS3B, help = f"Number of steps used in tabulating interatomic separation distances. Angle is tabulated with 2N entries. In symmetric case the number of table entries will be M = (N+1)N^2 and in asymmetric 2N^3. Default: {constants.DATAPOINTS3B}")
     sw_3b.add_argument("-c", "--cutoff", type = float, default = constants.CUTOFF3B, help = f"Table cutoff beyond which no potentials or forces will be generated. Default: {constants.CUTOFF3B} Å")
+    sw_3b.add_argument("-f", "--file",  nargs = "?", const = "in.SW3B", help = "A switch for generating a LAMMPS formatted input file incorporating all of the information that could be implied from the potential selected. Desired file name can be provided as a positional argument. Default: in.SW3B")
 
     sw_3b.set_defaults(handler_class = SW_3B)
 
@@ -132,9 +134,10 @@ def two_body(handler):
 def three_body(handler, symcase = False):
 
     table_name = handler.get_table_name()
+    table3b = handler.get_3b_tablename()
     
-    tb_file = open(table_name + ".3b", "w")
-    tab_file = open(table_name + ".table", "w")
+    tb_file = open(table3b, "w")
+    tab_file = open(table_name, "w")
 
     tb_file.write(constants.GENERATION_COMMENT)
     tab_file.write(constants.GENERATION_COMMENT)
@@ -151,7 +154,7 @@ def three_body(handler, symcase = False):
 
         tb_file.write(f"{triplet[1]}\n{triplet[0]}\n{triplet[2]}\n")
         tb_file.write(f"{cutoff}\n")
-        tb_file.write(table_name + ".table\n")
+        tb_file.write(f"{table_name}\n")
 
         if orig or not is_symmetric:
             tb_file.write("-".join(triplet) + "\n")
@@ -233,7 +236,7 @@ def three_body(handler, symcase = False):
         elements = triplet.split("-")
         tb_file.write(f"{elements[1]}\n{elements[0]}\n{elements[2]}\n")
         tb_file.write("0.2\n")
-        tb_file.write(table_name + ".table\n")
+        tb_file.write(f"{table_name}\n")
 
         if elements[0] == elements[2]:
             tb_file.write("SYMPH\n")
@@ -248,7 +251,8 @@ def three_body(handler, symcase = False):
     tb_file.close()
     tab_file.close()
 
-
+    if handler.lammps_file_needed():
+        handler.gen_file()
 
 
 def main():
