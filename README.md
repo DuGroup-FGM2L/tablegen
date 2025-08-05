@@ -75,11 +75,12 @@ tablegen [style] [options]
 
 $$
 \begin{gather*}
-V^{short} = A_{ij} \exp(-\frac{r_{ij}}{\rho_{ij}}) - \frac{C_{ij}}{r_{ij}^6}
+V^{short} = A_{ij} \exp(-\frac{r_{ij}}{\rho_{ij}}) - \frac{C_{ij}}{r_{ij}^6}\\
+V^{\prime}= \frac{B_{ij}}{r^n} + D_{ij}\times r_{ij}^2
 \end{gather*}
 $$
 
-*Note: This potential defines cation to oxygen (and O-O) interactions.
+*Note: Second potential energy curve is added at the Buckingham inflection point as a shor-range correction. This potential defines cation to oxygen (and O-O) interactions.
 The rest should be added manually as coulombic interactions with Ewald summation and percision of 1e-6.
 Charges of each atomic species will be printed out.*
 
