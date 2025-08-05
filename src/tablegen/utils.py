@@ -74,7 +74,7 @@ class ErrorHandlingParser(argparse.ArgumentParser):
             super().__init__(*args, **kwargs)
 
     def error(self, message):
-        sys.stderr.write('error: %s\n\n' % message)
+        sys.stderr.write("\n\nERROR: %s\n\n" % message)
         self.print_help()
         sys.exit(2)
 

@@ -202,7 +202,7 @@ class SHIK(BASE2B):
 
         print("\nPAIRWISE COEFFICIENTS:\n")
 
-        pair_str_len = max([len(p) for p in constants.SHIK_coeffs.keys()] + [len("PAIR")]) + SHIK.SUPPORT_SPACING
+        pair_str_len = max([len(p) for p in constants.SHIK_COEFFS.keys()] + [len("PAIR")]) + SHIK.SUPPORT_SPACING
 
         num_coeffs = len(constants.SHIK_COEFF_HEADINGS)
         column_params = list()
@@ -211,7 +211,7 @@ class SHIK(BASE2B):
             coeff_str_len = len(constants.SHIK_COEFF_HEADINGS[i])
             max_left = 1
             max_right = 1
-            for coeffs in constants.SHIK_coeffs.values():
+            for coeffs in constants.SHIK_COEFFS.values():
                 mod_c = utils.format_min_dec(coeffs[i], 1).strip()
                 c_len = len(mod_c)
                 if c_len > coeff_str_len:
@@ -233,7 +233,7 @@ class SHIK(BASE2B):
             res_str += constants.SHIK_COEFF_HEADINGS[i].center(column_params[i][0])
         print("\t" + res_str)
 
-        for pair, coeffs in constants.SHIK_coeffs.items():
+        for pair, coeffs in constants.SHIK_COEFFS.items():
             res_str = "\t" + pair.ljust(pair_str_len)
             for i in range(num_coeffs):
                 res_str += utils.align_by_decimal(
