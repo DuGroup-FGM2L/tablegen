@@ -9,6 +9,7 @@ LAMMPS potential table generator for [LAMMPS](https://lammps.sandia.gov), develo
 - Classical Buckingham potential
 - Extended Buckingham potential with softening
 - Truncated harmonic three-body interactions
+- Stillinger-Weber three-body interactions
 
 ## 🔧 Features
 
