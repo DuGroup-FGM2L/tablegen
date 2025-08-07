@@ -12,7 +12,7 @@ build-backend = "hatchling.build"
 ###############################################################################
 [project]
 name            = "lammps-tablegen"
-version         = "0.2.3"
+version         = "0.2.4"
 description     = "Generator for LAMMPS two-body and three-body tabulated potentials."
 readme          = "README.md"
 requires-python = ">=3.9"
