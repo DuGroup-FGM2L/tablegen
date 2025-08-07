@@ -44,9 +44,6 @@ class StrictSubParsersAction(argparse._SubParsersAction):
             msg = _('unknown parser %(parser_name)r (choices: %(choices)s)') % args
             raise ArgumentError(self, msg)
 
-        if parser_name in self._deprecated:
-            parser._warning(_("command '%(parser_name)s' is deprecated") %
-                            {'parser_name': parser_name})
 
         #Parse argse with error calls from subparser instead of delegating
         #unrecognized argument error to the main parser
