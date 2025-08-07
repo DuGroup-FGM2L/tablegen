@@ -30,6 +30,14 @@ The package is now published on PyPI you can install the latest stable release w
 pip install lammps-tablegen
 ```
 
+If your operating system uses Python 3.11+ with PEP 668 (externally managed environments), you'll need to install this package inside a virtual environment.
+
+A convenient tool for installing command-line applications in isolated environments is `pipx`. It can be used as follows:
+
+```bash
+pipx install lammps-tablegen
+```
+
 ### Install directly from GitHub (bleeding‑edge)
 
 If you need the most recent commit:

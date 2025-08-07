@@ -10,13 +10,12 @@ class SupportAction(argparse.Action):
                  default=False,
                  required=False,
                  help=None,
-                 deprecated=False):
+                 ):
         super(SupportAction, self).__init__(
             option_strings=option_strings,
             dest=dest,
             nargs=0,
             const=True,
-            deprecated=deprecated,
             required=required,
             help=help,
             default=default)
