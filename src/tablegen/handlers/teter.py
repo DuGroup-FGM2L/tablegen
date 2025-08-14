@@ -24,7 +24,7 @@ class TETER(BASE2B):
 
         self.TWO_BODY = True
 
-        self.UNITS = "real"
+        self.UNITS = "metal"
 
         self.CHARGES = constants.TETER_CHARGES
 
