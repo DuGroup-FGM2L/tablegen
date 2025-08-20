@@ -32,8 +32,7 @@ dependencies = [
 sources = ["src"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/tablegen"]
-packages = ["tablegen"]
+packages = ["src/tablegen", "tablegen"]
 
 
 authors = [
