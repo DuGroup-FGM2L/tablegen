@@ -144,7 +144,7 @@ class SHIK(BASE2B):
             if spec == "O":
                 num_ox += stoic
             else:
-                total_charge += self.CHARGES[spec]
+                total_charge += self.CHARGES[spec]*stoic
 
         return -total_charge/num_ox
 
