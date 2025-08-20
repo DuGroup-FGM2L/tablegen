@@ -43,7 +43,7 @@ pipx install lammps-tablegen
 If you need the most recent commit:
 
 ```bash
-pip install git+https://github.com/superde1fin/tablegen.git
+pip install git+https://github.com/DuGroup-FGM2L/tablegen.git
 ```
 
 ### Clone & install locally
@@ -51,7 +51,7 @@ pip install git+https://github.com/superde1fin/tablegen.git
 For local experimentation or contributing:
 
 ```bash
-git clone https://github.com/superde1fin/tablegen.git
+git clone https://github.com/DuGroup-FGM2L/tablegen.git
 cd tablegen
 
 # Standard install (no dev extras)

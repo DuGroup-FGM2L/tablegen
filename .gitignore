@@ -6,3 +6,6 @@ __pycache__/
 .venv
 *.egg-info/
 *.swp
+dist/
+build/
+*.tar.gz
