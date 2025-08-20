@@ -33,6 +33,7 @@ sources = ["src"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tablegen"]
+packages = ["tablegen"]
 
 
 authors = [
