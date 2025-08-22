@@ -148,20 +148,23 @@ def generate_filetext_3b(elements, tablename = "???", units = "???", timestep = 
     return text
     
 
-def generate_filetext_2b(elements, pairs, datapoints, tablename, cutoff, units, timestep = "???", extra_pairstyle = ""):
+def generate_filetext_2b(elements, pairs, datapoints, tablename, cutoff, units, timestep = "???", extra_pairstyle = "", filename = "initial.data"):
     text = constants.GENERATION_COMMENT
 
     text += "\n\n#REQUIRED USER SPECIFIED DEFINITIONS\n\n"
 
     text += "#Determines what attributes atoms have\n"
-    text += "atom_style".ljust(constants.LAMMPS_FILE_TAB) + "???\n"
-    text += "boundary".ljust(constants.LAMMPS_FILE_TAB) + "??? ??? ???\n"
+    text += "#This setting is a common option but one should change it accordingly\n"
+    text += "atom_style".ljust(constants.LAMMPS_FILE_TAB) + "charge\n"
+    text += "\n#Simulation regions are commonly periodic in all directions"
+    text += "boundary".ljust(constants.LAMMPS_FILE_TAB) + "p p p\n"
 
     text += "#Unit set determined by the potential\n"
     text += "units".ljust(constants.LAMMPS_FILE_TAB) + f"{units}\n"
 
-    text += "#Defines initial atomic positions by providing a file\n"
-    text += "read_data".ljust(constants.LAMMPS_FILE_TAB) + "???\n"
+    text += "\n#Defines initial atomic positions by providing a file\n"
+    text += "#This file name is a placeholder.\n"
+    text += "read_data".ljust(constants.LAMMPS_FILE_TAB) + f"{filename}\n"
 
     text += "\n\n#REQUIRED SECTION\n\n"
 
@@ -191,9 +194,6 @@ def generate_filetext_2b(elements, pairs, datapoints, tablename, cutoff, units, 
     text += "\n\n#USEFUL DEFINITIONS\n\n"
     for i in range(len(elements)):
         text += "group".ljust(constants.LAMMPS_FILE_TAB) + f"{elements[i]} type {i + 1}\n"
-
-
-
 
 
 

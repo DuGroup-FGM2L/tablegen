@@ -54,18 +54,42 @@ class SHIK(BASE2B):
         if "O" in self.SPECIES:
             self.CHARGES["O"] = self.get_oxygen_charge()
 
-        visited = list()
+        visited_specs = list()
+        visited_pairs = list()
         for spec1 in self.SPECIES:
-            if not spec1 in visited:
-                for spec2 in self.SPECIES:
-                    pair_name = f"{spec1}-{spec2}"
-                    if pair_name not in constants.SHIK_COEFFS.keys():
-                        if f"{spec2}-{spec1}" not in constants.SHIK_COEFFS.keys():
-                            print(f"\nWARNING: The {pair_name} interaction is not defined by this potential.\n")
-                    else:
-                        self.COEFFS[pair_name] = constants.SHIK_COEFFS[pair_name]
-            else:
+            if spec1 in visited_specs:
                 print(f"\nWARNING: Duplicate entry for species {spec1} will be counted towards the total. Make sure that this behavior is intended.\n")
+            else:
+                visited_specs.append(spec1)
+
+            for spec2 in self.SPECIES:
+                pair_name = f"{spec1}-{spec2}"            
+                pair_name_inv = f"{spec2}-{spec1}"
+                if not pair_name in visited_pairs:
+                    if pair_name in constants.SHIK_COEFFS.keys():
+                        self.COEFFS[pair_name] = constants.SHIK_COEFFS[pair_name]
+                    else:
+                        if pair_name_inv not in constants.SHIK_COEFFS.keys():
+                            print(f"\nWARNING: The {pair_name} short-range interaction is not defined by this potential.\n")
+                            self.COEFFS[pair_name] = [0, 0, 0, 0]
+
+                    visited_pairs.append(pair_name)
+                    visited_pairs.append(pair_name_inv)
+
+            if not spec1 in self.CHARGES:
+                print(f"Charge for species {spec1} is not defined by this potential.")
+                print(f"Make sure that this is not a typo.")
+                charge = input(f"Provide charge for {spec1}:")
+
+                if charge:
+                    try:
+                        charge = float(charge)
+                    except:
+                        print("Species charges should be decimals or integers.")
+                        sys.exit(1)
+                else:
+                    charge = 0
+
 
 
                 
