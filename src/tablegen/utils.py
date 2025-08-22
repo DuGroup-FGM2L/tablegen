@@ -156,7 +156,7 @@ def generate_filetext_2b(elements, pairs, datapoints, tablename, cutoff, units, 
     text += "#Determines what attributes atoms have\n"
     text += "#This setting is a common option but one should change it accordingly\n"
     text += "atom_style".ljust(constants.LAMMPS_FILE_TAB) + "charge\n"
-    text += "\n#Simulation regions are commonly periodic in all directions"
+    text += "\n#Simulation regions are commonly periodic in all directions\n"
     text += "boundary".ljust(constants.LAMMPS_FILE_TAB) + "p p p\n"
 
     text += "#Unit set determined by the potential\n"
