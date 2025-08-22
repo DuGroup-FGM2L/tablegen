@@ -290,7 +290,7 @@ class SHIK(BASE2B):
         for i in range(len(self.SPECIES)):
             text += "set".ljust(constants.LAMMPS_FILE_TAB) + f"type {i + 1} charge {self.CHARGES[self.SPECIES[i]]}\n"
 
-        text += "#This procedure follows multiple papers description of a\n"
+        text += "\n#This procedure follows multiple papers description of a\n"
         text += "#melt-quench process for oxide glasses with SHIK potentials.\n\n"
 
         text += "\n"
