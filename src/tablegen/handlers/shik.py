@@ -134,7 +134,7 @@ class SHIK(BASE2B):
                 visited_specs.append(spec1)
 
             for spec2 in self.SPECIES:
-                pair_name = f"{spec1}-{spec2}"            
+                pair_name = f"{spec1}-{spec2}"
                 pair_name_inv = f"{spec2}-{spec1}"
 
                 if spec1 in reuse_map:
@@ -154,9 +154,11 @@ class SHIK(BASE2B):
                                 print(f"\nWARNING: The {pair_name} short-range interaction is not defined by this potential.\n")
                             else:
                                 print(f"\nWARNING: The {pair_name} (mapped to {mapped_pair_name}) short-range interaction is not defined by this potential.\n")
-                                
+
                             self.COEFFS[pair_name] = [0, 0, 0, 0]
-                           
+                        else:
+                            self.COEFFS[pair_name_inv] = constants.SHIK_COEFFS[mapped_pair_name_inv]
+
 
                     visited_pairs.append(pair_name)
                     visited_pairs.append(pair_name_inv)
@@ -164,7 +166,7 @@ class SHIK(BASE2B):
 
 
 
-                
+
 
         print("Charges:\n")
         for spec in self.SPECIES:
@@ -177,7 +179,7 @@ class SHIK(BASE2B):
     def get_pairs(self):
         return self.COEFFS.keys()
 
-        
+
     def get_force(self, A, B, C, D, q_a, q_b, r, *args):
         A = mp.mpf(A)
         B = mp.mpf(B)
