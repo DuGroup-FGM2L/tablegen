@@ -29,6 +29,12 @@ class SHIK(BASE2B):
         if self.NEED_FILE:
             self.LAMMPS_FILENAME = args.file
 
+        self.CHARGES = constants.SHIK_CHARGES
+
+        reuse_map = dict()
+        ox_like_species = dict()
+
+        visited_specs = list()
         for spec in args.species:
             if ":" not in spec:
                 stoic = "1"
@@ -39,20 +45,85 @@ class SHIK(BASE2B):
                 else:
                     spec, stoic = splt_spec_entry
 
-            if spec not in constants.SHIK_SPECIES:
-                print(f"ERROR: Unsopported species {spec}. Run tablegen shik -s to view atom support.")
-                sys.exit(1)
-            else:
-                self.SPECIES.append(spec)
-                if stoic.isnumeric():
-                    self.STOICS.append(int(stoic))
-                else:
-                    print("\nERROR: Element stoichiometric coefficients have to have integer values.\n")
-                    sys.exit(1)
+            if not spec in visited_specs:
+                reuse_charge = ""
+                if spec not in constants.SHIK_SPECIES:
+                    print(f"\nWARNING: Unsupported atom {spec}.\n")
+                    reuse_coeffs = input(f"Do you want to use other species coefficients for it (y/n)?")
+                    reuse_coeffs = reuse_coeffs.strip().lower()
+                    if reuse_coeffs in ("", "y", "yes"):
+                        reuse_coeffs = input(f"Please provide a species you want {spec} to represent: ")
+                        if not reuse_coeffs in constants.SHIK_SPECIES:
+                            print(f"Species {reuse_coeffs} coefficients are not defined either.")
+                            sys.exit(1)
 
-        self.CHARGES = constants.SHIK_CHARGES
+                        reuse_map[spec] = reuse_coeffs
+
+                    reuse_charge = input(f"Do you want to use other species charge for it (y/n)?")
+                    reuse_charge = reuse_charge.strip().lower()
+                    if reuse_charge in ("", "y", "yes"):
+                        reuse_charge = input(f"Please provide a species you want {spec} to represent: ")
+                        if not reuse_charge in self.CHARGES:
+                            print(f"Species {reuse_charge} charge is not defined either.")
+                            sys.exit(1)
+
+                        if reuse_charge != 'O':
+                            charge = self.CHARGES[reuse_charge]
+                        else:
+                            charge = 0
+
+                    else:
+                        print(f"Charge for species {spec} is not defined by this potential.")
+                        print(f"Make sure that this is not a typo.")
+                        charge = input(f"Provide charge for {spec}: ")
+
+                        if charge:
+                            try:
+                                charge = float(charge)
+                            except:
+                                print("Species charges should be decimals or integers.")
+                                sys.exit(1)
+                        else:
+                            charge = 0
+
+                    self.CHARGES[spec] = charge
+
+                    if spec not in constants.ATOMIC_MASSES:
+                        print(f"\nMass for species {spec} is not defined.")
+                        print(f"Make sure this is not a typo.")
+                        mass = input(f"Provide mass for {spec}: ")
+
+                        try:
+                            mass = float(mass)
+                            assert mass > 0
+                        except:
+                            print("Species masses should be positive decimals or integers")
+                            sys.exit(1)
+
+                        constants.ATOMIC_MASSES[spec] = mass
+
+                self.SPECIES.append(spec)
+
+            if stoic.isnumeric():
+                stoic = int(stoic)
+                if not spec in visited_specs:
+                    self.STOICS.append(stoic)
+                else:
+                    self.STOICS[self.SPECIES.index(spec)] += stoic
+            else:
+                print("\nERROR: Element stoichiometric coefficients have to have integer values.\n")
+                sys.exit(1)
+
+            if reuse_charge:
+                ox_like_species[spec] = stoic
+
+            visited_specs.append(spec)
+
         if "O" in self.SPECIES:
-            self.CHARGES["O"] = self.get_oxygen_charge()
+            self.CHARGES["O"] = self.get_oxygen_charge(ox_like_species)
+
+        for spec in ox_like_species.keys():
+            self.CHARGES[spec] = self.CHARGES["O"]
 
         visited_specs = list()
         visited_pairs = list()
@@ -65,30 +136,31 @@ class SHIK(BASE2B):
             for spec2 in self.SPECIES:
                 pair_name = f"{spec1}-{spec2}"            
                 pair_name_inv = f"{spec2}-{spec1}"
-                if not pair_name in visited_pairs:
-                    if pair_name in constants.SHIK_COEFFS.keys():
-                        self.COEFFS[pair_name] = constants.SHIK_COEFFS[pair_name]
+
+                if spec1 in reuse_map:
+                    spec1 = reuse_map[spec1]
+                if spec2 in reuse_map:
+                    spec2 = reuse_map[spec2]
+
+                mapped_pair_name = f"{spec1}-{spec2}"
+                mapped_pair_name_inv = f"{spec2}-{spec1}"
+
+                if not mapped_pair_name in visited_pairs:
+                    if mapped_pair_name in constants.SHIK_COEFFS.keys():
+                        self.COEFFS[pair_name] = constants.SHIK_COEFFS[mapped_pair_name]
                     else:
-                        if pair_name_inv not in constants.SHIK_COEFFS.keys():
-                            print(f"\nWARNING: The {pair_name} short-range interaction is not defined by this potential.\n")
+                        if mapped_pair_name_inv not in constants.SHIK_COEFFS.keys():
+                            if pair_name == mapped_pair_name:
+                                print(f"\nWARNING: The {pair_name} short-range interaction is not defined by this potential.\n")
+                            else:
+                                print(f"\nWARNING: The {pair_name} (mapped to {mapped_pair_name}) short-range interaction is not defined by this potential.\n")
+                                
                             self.COEFFS[pair_name] = [0, 0, 0, 0]
+                           
 
                     visited_pairs.append(pair_name)
                     visited_pairs.append(pair_name_inv)
 
-            if not spec1 in self.CHARGES:
-                print(f"Charge for species {spec1} is not defined by this potential.")
-                print(f"Make sure that this is not a typo.")
-                charge = input(f"Provide charge for {spec1}:")
-
-                if charge:
-                    try:
-                        charge = float(charge)
-                    except:
-                        print("Species charges should be decimals or integers.")
-                        sys.exit(1)
-                else:
-                    charge = 0
 
 
 
@@ -161,14 +233,16 @@ class SHIK(BASE2B):
             return mp.mpf(0)
 
 
-    def get_oxygen_charge(self):
+    def get_oxygen_charge(self, ox_like_species):
         num_ox = 0
         total_charge = 0
         for spec, stoic in zip(self.SPECIES, self.STOICS):
             if spec == "O":
                 num_ox += stoic
-            else:
+            elif spec not in ox_like_species:
                 total_charge += self.CHARGES[spec]*stoic
+
+        num_ox += sum(ox_like_species.values())
 
         return -total_charge/num_ox
 

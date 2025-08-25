@@ -30,28 +30,134 @@ class TETER(BASE2B):
 
         self.COEFFS = dict()
 
+        self.UNSUPPORTED_ELEMENS = list()
+
         visited = list()
         filtered_species = list()
         for spec in self.SPECIES:
             pair_name = None
 
-            for attempt in (f"{spec}-O", f"O-{spec}"):
-                if attempt in constants.TETER_COEFFS:
-                    pair_name = attempt
+            attempt = f"{spec}-O"
+            inv_attempt = f"O-{spec}"
 
-            if pair_name is None:
-                print(f"\nWARNING: Unsupported atom {spec} will be ignored.\n")
-            elif pair_name in visited:
+            if attempt in constants.TETER_COEFFS:
+                pair_name = attempt
+                inv_pair_name= inv_attempt
+            elif inv_attempt in constants.TETER_COEFFS:
+                pair_name = inv_attempt
+                inv_pair_name = attempt
+
+            spec_supported = pair_name is not None
+
+
+            reuse_coeffs = ""
+            reuse_charge = ""
+            if not spec_supported:
+                print(f"\nWARNING: Unsupported atom {spec}.\n")
+
+                reuse_coeffs = input(f"Do you want to use other species coefficients for it (y/n)?")
+                reuse_coeffs = reuse_coeffs.strip().lower()
+                if reuse_coeffs in ("", "y", "yes"):
+                    reuse_coeffs = input(f"Please provide a species you want {spec} to represent: ")
+                    spec_reuse = reuse_coeffs
+
+                    attempt = f"{reuse_coeffs}-O"
+                    if attempt in constants.TETER_COEFFS:
+                        reuse_coeffs = attempt
+                    else:
+                        attempt = f"O-{reuse_coeffs}"
+                        if attempt in constants.TETER_COEFFS:
+                            reuse_coeffs = attempt
+                        else:
+                            print(f"Species {reuse_coeffs} coefficients are not defined either.")
+                            sys.exit(1)
+
+                    self.UNSUPPORTED_ELEMENS.append(spec)
+                    pair_name = f"{spec}-O"
+                    inv_pair_name = f"O-{spec}"
+
+                    if not self.NEED_FILE:
+                        self.CHARGES[spec] = self.CHARGES[spec_reuse]
+
+                else:
+                    reuse_coeffs = ""
+
+                    
+                
+                if self.NEED_FILE:
+                    reuse_charge = input(f"Do you want to use other species charge for it (y/n)?")
+                    reuse_charge = reuse_charge.strip().lower()
+                    if reuse_charge in ("", "y", "yes"):
+                        reuse_charge = input(f"Please provide a species you want {spec} to represent: ")
+                        if not reuse_charge in self.CHARGES:
+                            print(f"Species {reuse_charge} charge is not defined either.")
+                            sys.exit(1)
+                    else:
+                        reuse_charge = ""
+
+                    if not reuse_coeffs:
+                        self.UNSUPPORTED_ELEMENS.append(spec)
+                        pair_name = f"{spec}-O"
+                        inv_pair_name = f"O-{spec}"
+
+                    if spec not in self.CHARGES and not reuse_charge:
+                        print(f"Charge for species {spec} is not defined by this potential.")
+                        print(f"Make sure that this is not a typo.")
+                        charge = input(f"Provide charge for {spec}: ")
+
+                        if charge:
+                            try:
+                                charge = float(charge)
+                            except:
+                                print("Species charges should be decimals or integers.")
+                                sys.exit(1)
+                        else:
+                            charge = 0
+                        self.CHARGES[spec] = charge
+
+                    
+                elif not reuse_coeffs:
+                    print("\nWARNING: Unsupported atom will be ignored.\n")
+
+
+
+            if pair_name in visited:
                 print(f"\nWARNING: Duplicate entry for atom {spec} will be ignored.\n")
             else:
-                filtered_species.append(spec)
+                if spec_supported:
+                    filtered_species.append(spec)
+                    self.COEFFS[pair_name] = constants.TETER_COEFFS[pair_name]
+                elif reuse_coeffs:
+                    self.COEFFS[pair_name] = constants.TETER_COEFFS[reuse_coeffs]
+
+                if reuse_charge:
+                    self.CHARGES[spec] = self.CHARGES[reuse_charge]
+
+            if not pair_name in visited and self.NEED_FILE:
+                if spec in constants.ATOMIC_MASSES:
+                    print(f"Mass {spec} detected: {constants.ATOMIC_MASSES[spec]}")
+                else:
+                    print(f"\nMass for species {spec} is not defined.")
+                    print(f"Make sure this is not a typo.")
+                    mass = input(f"Provide mass for {spec}: ")
+
+                    try:
+                        mass = float(mass)
+                        assert mass > 0
+                    except:
+                        print("Species masses should be positive decimals or integers")
+                        sys.exit(1)
+
+                    constants.ATOMIC_MASSES[spec] = mass
+
+            if pair_name is not None:
                 visited.append(pair_name)
-                self.COEFFS[pair_name] = constants.TETER_COEFFS[pair_name]
+                visited.append(inv_pair_name)
 
         self.SPECIES = filtered_species
 
-        print("Charges:\n")
-        for spec in self.SPECIES:
+        print("\nCharges:\n")
+        for spec in self.SPECIES + self.UNSUPPORTED_ELEMENS:
             if spec in self.CHARGES:
                 print(spec, ":", self.CHARGES[spec])
         print()
@@ -209,9 +315,11 @@ class TETER(BASE2B):
 
     def gen_file(self):
         lmp_file = open(self.LAMMPS_FILENAME, "w")
+        
+        spec_extended = self.SPECIES + self.UNSUPPORTED_ELEMENS
 
         text = utils.generate_filetext_2b(
-            elements = self.SPECIES,
+            elements = spec_extended,
             pairs = self.COEFFS.keys(),
             datapoints = self.DATAPOINTS,
             tablename = self.TABLENAME,
@@ -223,8 +331,8 @@ class TETER(BASE2B):
 
         text += "\n\n#COULOMBIC INTERACTIONS\n\n"
 
-        for i in range(len(self.SPECIES)):
-            text += "set".ljust(constants.LAMMPS_FILE_TAB) + f"type {i + 1} charge {self.CHARGES[self.SPECIES[i]]}\n"
+        for i in range(len(spec_extended)):
+            text += "set".ljust(constants.LAMMPS_FILE_TAB) + f"type {i + 1} charge {self.CHARGES[spec_extended[i]]} #{spec_extended[i]}\n"
         
         text += "\n"
         text += "kspace_style".ljust(constants.LAMMPS_FILE_TAB) + "ewald 0.000001\n\n"

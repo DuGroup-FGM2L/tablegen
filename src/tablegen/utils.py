@@ -171,9 +171,9 @@ def generate_filetext_2b(elements, pairs, datapoints, tablename, cutoff, units, 
     
     for i in range(len(elements)):
         if elements[i] in constants.ATOMIC_MASSES:
-            text += "mass".ljust(constants.LAMMPS_FILE_TAB) + f"{i + 1} {constants.ATOMIC_MASSES[elements[i]]}\n"
+            text += "mass".ljust(constants.LAMMPS_FILE_TAB) + f"{i + 1} {constants.ATOMIC_MASSES[elements[i]]} #{elements[i]}\n"
         else:
-            text += "mass".ljust(constants.LAMMPS_FILE_TAB) + f"{i + 1} ???\n"
+            text += "mass".ljust(constants.LAMMPS_FILE_TAB) + f"{i + 1} ??? #{elements[i]}\n"
 
     text += "\n\n"
     
