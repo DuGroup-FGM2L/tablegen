@@ -83,8 +83,8 @@ class BUCK_EXT(BASE2B):
         r = mp.mpf(r)
         if (not A) and (not C) and (not rho):
             rho = mp.mpf(1)
-        rp = r / (43 * rho)
-        return float((A / rho) * mp.exp(-r / rho) - 6 * C * r**-7 * (1 - mp.exp(-rp**6)) + (6 * C / (43**6 * rho**6)) * r**-1 * mp.exp(-rp**6) + 12 * D * r**-13)
+        rp = r / (4.3 * rho)
+        return float((A / rho) * mp.exp(-r / rho) - 6 * C * r**-7 * (1 - mp.exp(-rp**6)) + (6 * C / (4.3**6 * rho**6)) * r**-1 * mp.exp(-rp**6) + 12 * D * r**-13)
 
 
     def get_pot(self, A, rho, C, D, r):
@@ -95,7 +95,7 @@ class BUCK_EXT(BASE2B):
         r = mp.mpf(r)
         if (not A) and (not C) and (not rho):
             rho = mp.mpf(1)
-        rp = r / (43 * rho)
+        rp = r / (4.3 * rho)
         return float(A * mp.exp(-r / rho) - (C / r**6) * (1 - mp.exp(-rp**6)) + D / r**12)
 
 
