@@ -406,7 +406,7 @@ class SHIK(BASE2B):
         text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${npt_sit_timestep}\n"
         text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "npt_sit\n"
         text += "\n"
-        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "quench all npt temp ${start_temp} ${end_temp} $(100.0*dt) iso 0 0 $(100.0*dt)\n"
+        text += "fix".ljust(constants.LAMMPS_FILE_TAB) + "quench all npt temp ${start_temp} ${end_temp} $(100.0*dt) iso ${npt_press_correct} 0 $(1000.0*dt)\n"
         text += "run".ljust(constants.LAMMPS_FILE_TAB) + "${quench_timestep}\n"
         text += "unfix".ljust(constants.LAMMPS_FILE_TAB) + "quench\n"
         text += "\n"
